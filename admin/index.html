@@ -121,9 +121,9 @@ tbody td{padding:9px 13px;vertical-align:middle;}
 .coin-row{display:flex;align-items:center;gap:10px;background:var(--bg);border:1.5px solid var(--border);border-radius:12px;padding:12px 16px;margin-top:12px;}
 .coin-label{font-size:12px;font-weight:600;color:var(--text-sub);flex-shrink:0;}
 .coin-toggle-row{display:flex;gap:6px;}
-.coin-dir{padding:5px 14px;border-radius:8px;border:1.5px solid var(--border);background:var(--surface);font-size:12px;font-weight:700;cursor:pointer;transition:all .15s;}
-.coin-dir.plus{border-color:var(--green-dk);color:var(--green-dk);}
-.coin-dir.minus{border-color:var(--red-dk);color:var(--red-dk);}
+.coin-dir{padding:5px 14px;border-radius:8px;border:1.5px solid var(--border);background:var(--surface);font-size:14px;font-weight:700;cursor:pointer;transition:all .15s;color:var(--text-sub);}
+.coin-dir.active-plus{border-color:var(--green-dk);background:var(--green-dk);color:#fff;}
+.coin-dir.active-minus{border-color:var(--red-dk);background:var(--red-dk);color:#fff;}
 
 /* INQUIRY */
 .inq-item{background:var(--surface);border:1.5px solid var(--border);border-radius:14px;padding:14px 16px;margin-bottom:10px;transition:border-color .2s;}
@@ -291,13 +291,19 @@ tbody td{padding:9px 13px;vertical-align:middle;}
       <button class="sub-btn active" onclick="switchUpbo('assign')">📋 업보 부여</button>
       <button class="sub-btn" onclick="switchUpbo('members')">👥 시청자 관리</button>
       <button class="sub-btn" onclick="switchUpbo('types')">🏷️ 타입 관리</button>
-      <button class="sub-btn" onclick="switchUpbo('date')">📅 갱신일</button>
     </div>
 
     <!-- 업보 부여 -->
     <div class="sub-page active" id="upbo-assign">
       <div class="sc">
-        <div class="sc-title">👤 시청자 선택</div>
+        <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:12px;flex-wrap:wrap;gap:8px;">
+          <div class="sc-title" style="margin-bottom:0;">👤 시청자 선택</div>
+          <div style="display:flex;align-items:center;gap:8px;">
+            <label style="margin:0;font-size:12px;white-space:nowrap;">갱신일</label>
+            <input type="date" id="upboDateAssign" style="width:auto;">
+            <button class="btn btn-add" style="padding:6px 12px;font-size:12px;" onclick="saveUpboDateAssign()">저장</button>
+          </div>
+        </div>
         <div style="margin-bottom:10px;"><input type="text" id="assignSearch" placeholder="🔍 시청자 검색..." oninput="filterAssignMembers()"></div>
         <div class="member-grid" id="assignMemberGrid"></div>
       </div>
@@ -312,13 +318,13 @@ tbody td{padding:9px 13px;vertical-align:middle;}
         <div class="task-grid" id="taskGrid"></div>
         <!-- 코인 -->
         <div class="coin-row">
-          <span class="coin-label">🪙 코인</span>
-          <span id="coinCurrent" style="font-family:'Nunito',sans-serif;font-size:15px;font-weight:900;min-width:50px;"></span>
+          <span class="coin-label">Coin</span>
+          <span id="coinCurrent" style="font-family:'Nunito',sans-serif;font-size:15px;font-weight:900;min-width:60px;"></span>
           <div class="coin-toggle-row">
-            <button class="coin-dir plus" id="coinPlus" onclick="setCoinDir(1)">＋</button>
-            <button class="coin-dir minus" id="coinMinus" onclick="setCoinDir(-1)">−</button>
+            <button class="coin-dir" id="coinPlus" onclick="setCoinDir(1)">＋</button>
+            <button class="coin-dir" id="coinMinus" onclick="setCoinDir(-1)">−</button>
           </div>
-          <input type="number" id="coinAmt" placeholder="개수" style="width:80px;flex:none;text-align:center;" min="0">
+          <input type="number" id="coinAmt" placeholder="개수" style="width:80px;flex:none;text-align:center;" min="1">
         </div>
       </div>
     </div>
@@ -343,9 +349,9 @@ tbody td{padding:9px 13px;vertical-align:middle;}
     <!-- 타입 관리 -->
     <div class="sub-page" id="upbo-types">
       <div class="sc">
-        <div class="sc-title">🏷️ 업보 타입 추가</div>
+        <div class="sc-title">🏷️ 업보 추가</div>
         <div class="r3">
-          <div><label>타입명</label><input type="text" id="typeNm" placeholder="예: 개인방송 늦음"></div>
+          <div><label>타입명</label><input type="text" id="typeNm" placeholder="예: 단컷 방셀"></div>
           <div><label>카테고리</label>
             <select id="typeCat"><option value="normal">일반</option><option value="event">이벤트</option></select>
           </div>
@@ -353,21 +359,11 @@ tbody td{padding:9px 13px;vertical-align:middle;}
         </div>
       </div>
       <div class="sc">
-        <div class="sc-title">타입 목록</div>
+        <div class="sc-title">업보 목록</div>
         <div id="typeList"></div>
       </div>
     </div>
 
-    <!-- 갱신일 -->
-    <div class="sub-page" id="upbo-date">
-      <div class="sc">
-        <div class="sc-title">📅 갱신일 설정</div>
-        <div style="display:flex;gap:8px;">
-          <input type="date" id="upboDate" style="flex:1;">
-          <button class="btn btn-add" onclick="saveUpboDate()">저장</button>
-        </div>
-      </div>
-    </div>
   </div>
 
   <!-- ══ 문의 ══ -->
@@ -443,7 +439,7 @@ function initAll(){
   initColorSel();initStars('addStars','songLevel');
   const now=new Date();
   document.getElementById('sFilterMonth').value=`${now.getFullYear()}-${String(now.getMonth()+1).padStart(2,'0')}`;
-  document.getElementById('upboDate').value=now.toISOString().split('T')[0];
+  document.getElementById('upboDateAssign').value=now.toISOString().split('T')[0];
   loadSchedules();loadSongs();loadTaskTypes();loadMembers();loadOvInlineHistory();loadInqBadge();
 }
 
@@ -648,7 +644,7 @@ function editSong(id){
       <div><label>제목</label><input type="text" id="eTitle2" value="${s.title}"></div>
       <div><label>난이도</label><div class="star-row" id="eStars">${starHtml}</div><input type="hidden" id="eLevel" value="${s.level||0}"></div>
       <div><label>메모</label><input type="text" id="eMemo" value="${s.memo||''}"></div>
-      <div><label style="display:flex;align-items:center;gap:6px;cursor:pointer;font-size:12px;"><input type="checkbox" id="eSig"${s.is_signature?' checked':''}> 시그니처 🎀</label></div>
+      <div><label style="display:flex;align-items:center;gap:8px;cursor:pointer;font-size:12px;color:var(--text-sub);font-weight:600;"><input type="checkbox" id="eSig"${s.is_signature?' checked':''}> 시그니처</label></div>
       <div style="text-align:right;"><button class="btn btn-add" onclick="saveSongEdit(${id})">저장</button></div>
     </div>`;
   document.getElementById('editModal').classList.add('open');
@@ -713,11 +709,12 @@ async function loadTaskTypes(){
 
 function renderTypeList(){
   const el=document.getElementById('typeList');
-  if(!taskTypes.length){el.innerHTML='<div style="color:var(--text-mut);font-size:13px;">타입이 없어요</div>';return;}
+  if(!taskTypes.length){el.innerHTML='<div style="color:var(--text-mut);font-size:13px;">업보가 없어요</div>';return;}
   el.innerHTML='<div style="display:flex;flex-direction:column;gap:6px;">'+taskTypes.map(t=>`
     <div style="display:flex;align-items:center;gap:10px;padding:9px 14px;background:var(--bg);border:1.5px solid var(--border);border-radius:10px;">
       <span class="badge" style="background:${t.category==='event'?'#FDE8F0':'var(--lav-lt)'};color:${t.category==='event'?'#BE185D':'var(--lav-dk)'};">${t.category==='event'?'이벤트':'일반'}</span>
       <span style="font-size:13px;font-weight:600;flex:1;">${t.name}</span>
+      <button class="btn-edit" onclick="editTaskType(${t.id})">수정</button>
       <button class="btn-del" onclick="delTaskType(${t.id})">삭제</button>
     </div>`).join('')+'</div>';
 }
@@ -737,6 +734,30 @@ async function delTaskType(id){
   toast('🗑️ 삭제됨');loadTaskTypes();
 }
 
+function editTaskType(id){
+  const t=taskTypes.find(x=>x.id===id);if(!t)return;
+  document.getElementById('editModalTitle').textContent='업보 수정';
+  document.getElementById('editModalBody').innerHTML=`
+    <div style="display:flex;flex-direction:column;gap:10px;">
+      <div><label>타입명</label><input type="text" id="eTypeName" value="${t.name}"></div>
+      <div><label>카테고리</label><select id="eTypeCat">
+        <option value="normal"${t.category==='normal'?' selected':''}>일반</option>
+        <option value="event"${t.category==='event'?' selected':''}>이벤트</option>
+      </select></div>
+      <div style="text-align:right;"><button class="btn btn-add" onclick="saveTaskTypeEdit(${id})">저장</button></div>
+    </div>`;
+  document.getElementById('editModal').classList.add('open');
+}
+
+async function saveTaskTypeEdit(id){
+  const{error}=await supabaseClient.from('upbo_task_types').update({
+    name:document.getElementById('eTypeName').value.trim(),
+    category:document.getElementById('eTypeCat').value
+  }).eq('id',id);
+  if(error){toast('수정 실패');return;}
+  toast('✅ 수정됨');closeEditModal();loadTaskTypes();
+}
+
 async function loadMembers(){
   const{data}=await supabaseClient.from('upbo_members').select('*').order('created_at');
   allMembers=data||[];
@@ -753,7 +774,7 @@ function renderMemberList(list){
         <div style="font-size:14px;font-weight:600;">${m.nickname}</div>
         <div style="font-size:11px;color:var(--text-sub);">${m.user_id}</div>
       </div>
-      <span class="badge" style="background:var(--yellow);color:#92400E;">🪙 ${m.coins||0}</span>
+      <span class="badge" style="background:var(--yellow);color:#92400E;">Coin ${m.coins||0}</span>
       <button class="btn-edit" onclick="editMember(${m.id})">수정</button>
       <button class="btn-del" onclick="delMember(${m.id})">삭제</button>
     </div>`).join('');
@@ -766,7 +787,7 @@ function renderAssignMemberGrid(list){
     <button class="member-card-btn${selMemberId===m.id?' selected':''}" onclick="selectMember(${m.id})">
       <div class="mc-nick">${m.nickname}</div>
       <div class="mc-id">${m.user_id}</div>
-      <div class="mc-coin">🪙 ${m.coins||0}개</div>
+      <div class="mc-coin">Coin ${m.coins||0}개</div>
     </button>`).join('');
 }
 
@@ -825,8 +846,8 @@ async function selectMember(id){
   document.getElementById('coinCurrent').textContent=`${m.coins||0}개`;
   document.getElementById('coinAmt').value='';
   coinDir=1;
-  document.getElementById('coinPlus').style.fontWeight='900';
-  document.getElementById('coinMinus').style.fontWeight='400';
+  document.getElementById('coinPlus').className='coin-dir active-plus';
+  document.getElementById('coinMinus').className='coin-dir';
   renderAssignMemberGrid(allMembers.filter(x=>{
     const q=document.getElementById('assignSearch').value.toLowerCase();
     return !q||x.nickname.toLowerCase().includes(q)||x.user_id.toLowerCase().includes(q);
@@ -837,8 +858,8 @@ async function selectMember(id){
 
 function setCoinDir(dir){
   coinDir=dir;
-  document.getElementById('coinPlus').style.fontWeight=dir===1?'900':'400';
-  document.getElementById('coinMinus').style.fontWeight=dir===-1?'900':'400';
+  document.getElementById('coinPlus').className='coin-dir'+(dir===1?' active-plus':'');
+  document.getElementById('coinMinus').className='coin-dir'+(dir===-1?' active-minus':'');
 }
 
 async function loadMemberTasks(){
@@ -911,7 +932,13 @@ async function clearAllTasks(){
 }
 
 async function saveUpboDate(){
-  const v=document.getElementById('upboDate').value;if(!v)return;
+  const v=document.getElementById('upboDate')?.value;if(!v)return;
+  await supabaseClient.from('upbo_settings').upsert({key:'last_updated',value:v,updated_at:new Date().toISOString()},{onConflict:'key'});
+  toast('✅ 갱신일 저장!');
+}
+
+async function saveUpboDateAssign(){
+  const v=document.getElementById('upboDateAssign').value;if(!v)return;
   await supabaseClient.from('upbo_settings').upsert({key:'last_updated',value:v,updated_at:new Date().toISOString()},{onConflict:'key'});
   toast('✅ 갱신일 저장!');
 }
