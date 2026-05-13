@@ -148,7 +148,8 @@
 <div class="page-wrap">
   <!-- Genre Tabs -->
   <div class="genre-tabs fade-up">
-    <button class="genre-tab active" data-genre="kpop">케이팝</button>
+    <button class="genre-tab active" data-genre="all">전체</button>
+    <button class="genre-tab" data-genre="kpop">케이팝</button>
     <button class="genre-tab" data-genre="jpop">제이팝</button>
     <button class="genre-tab" data-genre="pop">팝</button>
     <button class="genre-tab" data-genre="aegyo">애교송</button>
@@ -208,7 +209,7 @@
 
 <script src="/js/supabase-config.js"></script>
 <script>
-let currentGenre = 'kpop';
+let currentGenre = 'all';
 let allSongs = [];
 let sort = { key:'artist', dir:'asc' };
 let rndSong = null;
@@ -237,13 +238,13 @@ async function loadSongs() {
   document.getElementById('sigSection').style.display = 'none';
 
   try {
-    const { data, error } = await supabaseClient.from('songs').select('*')
-      .eq('genre', currentGenre).order('artist');
+    const query = supabaseClient.from('songs').select('*').order('artist');
+    const { data, error } = currentGenre === 'all' ? await query : await query.eq('genre', currentGenre);
     if (error) throw error;
     allSongs = data || [];
     loading.style.display = 'none';
 
-    const label = { kpop:'케이팝', jpop:'제이팝', pop:'팝', aegyo:'애교송' };
+    const label = { all:'전체', kpop:'케이팝', jpop:'제이팝', pop:'팝', aegyo:'애교송' };
     document.getElementById('tableLabel').textContent = label[currentGenre] || currentGenre;
 
     const sigs = allSongs.filter(s => s.is_signature);
