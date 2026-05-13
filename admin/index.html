@@ -73,9 +73,14 @@ textarea{resize:vertical;min-height:68px;}
 .tw{overflow-x:auto;border-radius:12px;border:1.5px solid var(--border);}
 table{width:100%;border-collapse:collapse;font-size:13px;}
 thead th{background:var(--lav-lt);padding:9px 13px;text-align:left;font-weight:700;color:var(--lav-dk);font-size:11px;white-space:nowrap;}
+thead th.col-title{width:28%;}
+thead th.col-artist{width:16%;}
+thead th.col-action{width:1%;white-space:nowrap;text-align:right;}
 tbody tr{border-top:1px solid var(--border);transition:background .15s;}
 tbody tr:hover{background:var(--lav-lt);}
 tbody td{padding:9px 13px;vertical-align:middle;}
+tbody td.col-title{max-width:0;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;}
+tbody td.col-action{white-space:nowrap;text-align:right;}
 .badge{display:inline-block;font-size:11px;font-weight:600;padding:2px 8px;border-radius:100px;}
 .empty-row td{text-align:center;color:var(--text-mut);padding:24px;}
 
@@ -287,7 +292,7 @@ tbody td{padding:9px 13px;vertical-align:middle;}
       <div style="margin-bottom:12px;"><input type="text" id="songSearch" placeholder="🔍 검색..." oninput="filterSongs()"></div>
       <div class="tw">
         <table>
-          <thead><tr><th>장르</th><th>아티스트</th><th>제목</th><th>난이도</th><th>메모</th><th>시그니처</th><th>오버레이</th><th>관리</th></tr></thead>
+          <thead><tr><th>장르</th><th class="col-artist">아티스트</th><th class="col-title">제목</th><th>난이도</th><th>메모</th><th>시그니처</th><th class="col-action">오버레이</th><th class="col-action">관리</th></tr></thead>
           <tbody id="songBody"><tr class="empty-row"><td colspan="8">로딩 중...</td></tr></tbody>
         </table>
       </div>
@@ -593,14 +598,14 @@ function renderSongTable(songs){
   tb.innerHTML=songs.map(s=>`<tr>
     <td><span class="badge" style="background:var(--lav-lt);color:var(--lav-dk);">${GENRE_LABEL[s.genre]||s.genre}</span></td>
     <td>${s.artist}</td>
-    <td>${s.title}</td>
+    <td class="col-title" title="${s.title}">${s.title}</td>
     <td style="color:var(--lav-dk);letter-spacing:1px;font-size:13px;">${stars(s.level)}</td>
     <td style="color:var(--text-sub);font-size:12px;">${s.memo||''}</td>
     <td style="text-align:center;">
       <label class="toggle"><input type="checkbox" ${s.is_signature?'checked':''} onchange="toggleSig(${s.id},this.checked)"><span class="toggle-slider"></span></label>
     </td>
-    <td><button class="btn-ov" onclick="publishOverlay('${s.title.replace(/'/g,"\\'")}','${s.artist.replace(/'/g,"\\'")}')">🎤</button></td>
-    <td><div style="display:flex;gap:5px;">
+    <td class="col-action"><button class="btn-ov" onclick="publishOverlay('${s.title.replace(/'/g,"\\'")}','${s.artist.replace(/'/g,"\\'")}')">🎤</button></td>
+    <td class="col-action"><div style="display:flex;gap:5px;justify-content:flex-end;">
       <button class="btn-edit" onclick="editSong(${s.id})">수정</button>
       <button class="btn-del" onclick="delSong(${s.id})">삭제</button>
     </div></td>

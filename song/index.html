@@ -68,9 +68,14 @@
 .song-table thead th:last-child  { border-radius: 0 12px 0 0; text-align: center; }
 .song-table tbody tr {
   border-bottom: 1px solid rgba(216,201,255,.2);
-  transition: background .15s;
+  transition: all .2s ease;
+  cursor: default;
 }
-.song-table tbody tr:hover { background: var(--lav-lt); }
+.song-table tbody tr:hover {
+  background: var(--lav-lt);
+  transform: translateY(-1px);
+  box-shadow: 0 4px 14px rgba(167,139,219,.12);
+}
 .song-table tbody tr:last-child { border-bottom: none; }
 .song-table td { padding: 11px 14px; font-size: 13px; color: var(--text); }
 .song-table td:last-child { text-align: center; }
