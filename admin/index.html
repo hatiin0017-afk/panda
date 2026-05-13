@@ -699,26 +699,30 @@ async function loadOvBar(){
 
 async function toggleOvVisible(checked){
   const statusEl=document.getElementById('ovBarStatus');
-  // overlay_state 테이블에 visible 상태 저장
-  await supabaseClient.from('overlay_state').upsert({id:1,is_visible:checked},{onConflict:'id'});
-  statusEl.textContent=checked?'표시중':'숨김';
-  statusEl.style.background=checked?'#DCFCE7':'#F3F4F6';
-  statusEl.style.color=checked?'#15803D':'#6B7280';
-  toast(checked?'🎤 오버레이 표시':'오버레이 숨김');
+  try{
+    const{error}=await supabaseClient.from('overlay_state').upsert({id:1,is_visible:checked});
+    if(error){toast('실패: '+error.message);console.error(error);return;}
+    statusEl.textContent=checked?'표시중':'숨김';
+    statusEl.style.background=checked?'#DCFCE7':'#F3F4F6';
+    statusEl.style.color=checked?'#15803D':'#6B7280';
+    toast(checked?'🎤 오버레이 표시':'오버레이 숨김');
+  }catch(e){toast('오류: '+e.message);console.error(e);}
 }
 
 async function loadOvState(){
   await loadOvBar();
-  const{data}=await supabaseClient.from('overlay_state').select('*').eq('id',1).single().catch(()=>({data:null}));
-  const visible=data?data.is_visible!==false:true;
-  const tog=document.getElementById('ovVisibleToggle');
-  const statusEl=document.getElementById('ovBarStatus');
-  if(tog)tog.checked=visible;
-  if(statusEl){
-    statusEl.textContent=visible?'표시중':'숨김';
-    statusEl.style.background=visible?'#DCFCE7':'#F3F4F6';
-    statusEl.style.color=visible?'#15803D':'#6B7280';
-  }
+  try{
+    const{data,error}=await supabaseClient.from('overlay_state').select('*').eq('id',1).single();
+    const visible=(error||!data)?true:data.is_visible!==false;
+    const tog=document.getElementById('ovVisibleToggle');
+    const statusEl=document.getElementById('ovBarStatus');
+    if(tog)tog.checked=visible;
+    if(statusEl){
+      statusEl.textContent=visible?'표시중':'숨김';
+      statusEl.style.background=visible?'#DCFCE7':'#F3F4F6';
+      statusEl.style.color=visible?'#15803D':'#6B7280';
+    }
+  }catch(e){console.error(e);}
 }
 
 function copyOvUrl(){
