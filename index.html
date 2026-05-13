@@ -1,0 +1,333 @@
+<!DOCTYPE html>
+<html lang="ko">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>판다율 🐼</title>
+<meta property="og:title" content="판다율">
+<meta property="og:description" content="소통 · 종겜 버튜버 판다율">
+<script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
+<link href="https://fonts.googleapis.com/css2?family=Nunito:wght@400;700;800;900&family=Noto+Sans+KR:wght@400;500;700&display=swap" rel="stylesheet">
+<style>
+:root {
+  --bg:       #FEFCE8;
+  --surface:  #FFFFFF;
+  --lav:      #D8C9FF;
+  --lav-dk:   #A78BDB;
+  --lav-lt:   #F3EEFF;
+  --yellow:   #FDE68A;
+  --pink:     #FFD6EC;
+  --pink-lt:  #FFF4FA;
+  --text:     #3D2F60;
+  --text-sub: #9183B0;
+  --text-mut: #C0B6D6;
+  --border:   #EDE6FF;
+}
+* { box-sizing: border-box; margin: 0; padding: 0; }
+body { background: var(--bg); font-family: 'Noto Sans KR', sans-serif; color: var(--text); }
+
+/* ── HERO BANNER ── */
+.hero-banner { max-width: 780px; margin: 28px auto 0; padding: 0 20px; }
+.banner-inner {
+  border-radius: 24px;
+  border: 1.5px solid var(--border);
+  background: var(--surface);
+  overflow: hidden;
+  display: flex;
+  flex-direction: column;
+}
+.banner-img {
+  width: 100%; height: 280px;
+  background: linear-gradient(160deg, var(--lav-lt) 0%, var(--yellow) 100%);
+  display: flex; align-items: center; justify-content: center;
+  position: relative; overflow: hidden;
+}
+.profile-img {
+  width: 100%; height: 100%;
+  display: flex; align-items: center; justify-content: center;
+}
+.profile-img img {
+  width: 100%; height: 100%;
+  object-fit: cover; object-position: center center;
+}
+.banner-info {
+  padding: 20px 22px 22px;
+  display: flex; flex-direction: column; gap: 14px;
+  border-top: 1.5px solid var(--border);
+}
+.banner-name-row { display: flex; align-items: baseline; gap: 10px; }
+.banner-name {
+  font-family: 'Nunito', sans-serif;
+  font-size: 26px; font-weight: 900;
+  background: linear-gradient(135deg, #A78BDB 0%, #E88BB5 100%);
+  -webkit-background-clip: text; -webkit-text-fill-color: transparent;
+  background-clip: text; letter-spacing: -0.5px; line-height: 1;
+}
+.banner-tag { font-size: 12px; color: var(--text-sub); }
+.profile-grid {
+  display: grid;
+  grid-template-columns: repeat(6, 1fr);
+  gap: 6px;
+}
+@media (max-width: 600px) {
+  .profile-grid { grid-template-columns: repeat(3, 1fr); }
+  .banner-img { height: 200px; }
+}
+.pc {
+  background: var(--bg); border: 1.5px solid var(--border);
+  border-radius: 11px; padding: 9px 11px;
+}
+.pc.accent { background: var(--lav-lt); border-color: var(--lav); }
+.pc-label {
+  font-size: 9px; font-weight: 700; color: var(--text-mut);
+  letter-spacing: .8px; text-transform: uppercase; margin-bottom: 3px;
+}
+.pc-value { font-size: 12px; font-weight: 600; color: var(--text); }
+.pc.accent .pc-value { color: var(--lav-dk); }
+
+/* ── NAV ── */
+.nav-wrap { max-width: 780px; margin: 14px auto 0; padding: 0 20px; }
+.nav-inner {
+  display: flex; gap: 4px;
+  background: var(--surface); border: 1.5px solid var(--border);
+  border-radius: 100px; padding: 5px;
+  overflow-x: auto; scrollbar-width: none;
+}
+.nav-inner::-webkit-scrollbar { display: none; }
+.nav-inner a {
+  text-decoration: none; font-size: 13px; font-weight: 600;
+  color: var(--text-sub); padding: 7px 18px; border-radius: 100px;
+  white-space: nowrap; transition: all .15s; flex-shrink: 0;
+}
+.nav-inner a.active { background: var(--lav); color: var(--text); }
+.nav-inner a:hover { color: var(--text); }
+
+/* ── SECTION ── */
+.section { max-width: 780px; margin: 28px auto 0; padding: 0 20px; }
+.sec-label {
+  font-size: 11px; font-weight: 700; letter-spacing: 1.5px;
+  color: var(--text-mut); text-transform: uppercase; margin-bottom: 12px;
+  display: flex; align-items: center; gap: 10px;
+}
+.sec-label::after { content:''; flex:1; height:1px; background:var(--border); }
+
+/* ── SCHEDULE ── */
+.sched-list { display: flex; flex-direction: column; gap: 8px; }
+.sched {
+  background: var(--surface); border: 1.5px solid var(--border);
+  border-radius: 16px; padding: 13px 18px;
+  display: flex; align-items: center; gap: 14px;
+}
+.sched.today { border-color: var(--lav-dk); background: var(--lav-lt); }
+.sched-date { text-align: center; min-width: 30px; }
+.sched-d { font-family:'Nunito',sans-serif; font-size:20px; font-weight:900; line-height:1; }
+.sched-dow { font-size:10px; font-weight:700; color:var(--text-sub); }
+.vdiv { width:1.5px; height:26px; background:var(--border); border-radius:2px; }
+.sched.today .vdiv { background: var(--lav); }
+.sched-title { font-size:14px; font-weight:600; }
+.sched-time { font-size:12px; color:var(--text-sub); margin-top:2px; }
+.today-dot { margin-left:auto; flex-shrink:0; width:8px; height:8px; border-radius:50%; background:var(--lav-dk); }
+
+/* type 뱃지 */
+.type-badge {
+  margin-left: auto; font-size: 11px; font-weight: 600;
+  padding: 3px 10px; border-radius: 100px;
+  flex-shrink: 0;
+}
+
+.empty-box {
+  background: var(--surface); border: 1.5px dashed var(--border);
+  border-radius: 16px; padding: 28px;
+  text-align: center; font-size: 13px; color: var(--text-mut);
+}
+.loading { text-align:center; padding:28px; font-size:13px; color:var(--text-mut); }
+
+/* ── OVERLAY ── */
+.overlay-list { display: flex; flex-direction: column; gap: 8px; }
+.ov-row {
+  background: var(--surface); border: 1.5px solid var(--border);
+  border-radius: 16px; padding: 11px 16px;
+  display: flex; align-items: center; gap: 12px;
+  transition: border-color .15s;
+}
+.ov-row:hover { border-color: var(--lav); }
+.ov-num { font-family:'Nunito',sans-serif; font-size:13px; font-weight:700; color:var(--text-mut); min-width:20px; }
+.ov-thumb {
+  width:38px; height:38px; border-radius:10px;
+  background:var(--lav-lt); border:1px solid var(--border);
+  display:flex; align-items:center; justify-content:center;
+  font-size:18px; flex-shrink:0;
+}
+.ov-title { font-size:14px; font-weight:600; }
+.ov-artist { font-size:12px; color:var(--text-sub); margin-top:1px; }
+.ov-date { margin-left:auto; font-size:11px; color:var(--text-mut); white-space:nowrap; }
+
+/* ── FOOTER ── */
+footer {
+  max-width: 780px; margin: 36px auto 0;
+  padding: 20px 20px 48px;
+  border-top: 1.5px solid var(--border);
+  text-align: center; font-size: 12px; color: var(--text-mut);
+}
+</style>
+</head>
+<body>
+
+<!-- HERO BANNER -->
+<div class="hero-banner">
+  <div class="banner-inner">
+    <div class="banner-img">
+      <div class="profile-img">
+        <img src="/assets/profile.jpg" alt="판다율">
+      </div>
+    </div>
+    <div class="banner-info">
+      <div class="banner-name-row">
+        <div class="banner-name">판다율</div>
+        <div class="banner-tag">🐼 소통 · 종겜 버튜버</div>
+      </div>
+      <div class="profile-grid">
+        <div class="pc"><div class="pc-label">생일</div><div class="pc-value">10월 25일</div></div>
+        <div class="pc"><div class="pc-label">데뷔일</div><div class="pc-value">2025. 7. 7</div></div>
+        <div class="pc"><div class="pc-label">키</div><div class="pc-value">168cm</div></div>
+        <div class="pc accent"><div class="pc-label">MBTI</div><div class="pc-value">INTP</div></div>
+        <div class="pc accent"><div class="pc-label">팬 애칭</div><div class="pc-value">율팡이</div></div>
+        <div class="pc accent"><div class="pc-label">구독닉</div><div class="pc-value">[팡이]OO</div></div>
+      </div>
+    </div>
+  </div>
+</div>
+
+<!-- NAV -->
+<div class="nav-wrap">
+  <div class="nav-inner">
+    <a href="/" class="active">홈</a>
+    <a href="/schedule/">스케줄</a>
+    <a href="/song/">노래책</a>
+    <a href="/work/">업보</a>
+    <a href="#" id="broadcastLink" target="_blank">방송국</a>
+  </div>
+</div>
+
+<!-- 앞으로 일정 -->
+<div class="section">
+  <div class="sec-label">앞으로 일정</div>
+  <div id="sched-list" class="sched-list">
+    <div class="loading">일정 불러오는 중...</div>
+  </div>
+</div>
+
+<!-- 최근 오버레이 -->
+<div class="section" style="margin-bottom:0">
+  <div class="sec-label">최근 오버레이</div>
+  <div id="overlay-list" class="overlay-list">
+    <div class="loading">불러오는 중...</div>
+  </div>
+</div>
+
+<footer>© 2026 판다율</footer>
+
+<script src="/js/supabase-config.js"></script>
+<script>
+const DOW = ['일','월','화','수','목','금','토'];
+const TYPE_COLORS = {
+  broadcast: '#A78BDB', rest: '#C0B6D6', event: '#F9A8D4',
+  collab: '#86EFAC', tournament: '#93C5FD', other: '#FCD34D'
+};
+const TYPE_LABELS = {
+  broadcast: '방송', rest: '휴방', event: '이벤트',
+  collab: '합방', tournament: '대회', other: '기타'
+};
+
+async function loadSchedule() {
+  const el = document.getElementById('sched-list');
+  try {
+    const today = new Date();
+    today.setHours(0,0,0,0);
+    const limit = new Date(today);
+    limit.setDate(today.getDate() + 3);
+    const todayStr = today.toISOString().split('T')[0];
+    const limitStr = limit.toISOString().split('T')[0];
+
+    const { data, error } = await supabaseClient
+      .from('schedules')
+      .select('*')
+      .gte('event_date', todayStr)
+      .lt('event_date', limitStr)
+      .order('event_date')
+      .order('event_time');
+
+    if (error) throw error;
+
+    if (!data || !data.length) {
+      el.innerHTML = '<div class="empty-box">예정된 일정이 없어요 🐼</div>';
+      return;
+    }
+
+    el.innerHTML = data.map(s => {
+      const dt = new Date(s.event_date + 'T00:00:00');
+      const isToday = s.event_date === todayStr;
+      const color = s.color || TYPE_COLORS[s.event_type] || '#A78BDB';
+      const label = TYPE_LABELS[s.event_type] || s.event_type || '';
+      return `
+        <div class="sched ${isToday ? 'today' : ''}">
+          <div class="sched-date">
+            <div class="sched-d">${dt.getDate()}</div>
+            <div class="sched-dow">${DOW[dt.getDay()]}</div>
+          </div>
+          <div class="vdiv"></div>
+          <div style="flex:1">
+            <div class="sched-title">${s.title}</div>
+            ${s.event_time ? `<div class="sched-time">${s.event_time.slice(0,5)}</div>` : ''}
+          </div>
+          <span class="type-badge" style="background:${color}22;color:${color}">${label}</span>
+          ${isToday ? '<div class="today-dot"></div>' : ''}
+        </div>`;
+    }).join('');
+  } catch(e) {
+    console.error(e);
+    el.innerHTML = '<div class="empty-box">일정을 불러오지 못했어요</div>';
+  }
+}
+
+async function loadOverlay() {
+  const el = document.getElementById('overlay-list');
+  try {
+    const { data, error } = await supabaseClient
+      .from('recent_overlays')
+      .select('*')
+      .order('played_at', { ascending: false })
+      .limit(5);
+
+    if (error) throw error;
+
+    if (!data || !data.length) {
+      el.innerHTML = '<div class="empty-box">최근 오버레이 기록이 없어요 🎵</div>';
+      return;
+    }
+
+    el.innerHTML = data.map((s, i) => {
+      const d = new Date(s.played_at);
+      const dateStr = `${d.getMonth()+1}/${d.getDate()}`;
+      return `
+        <div class="ov-row">
+          <span class="ov-num">0${i+1}</span>
+          <div class="ov-thumb">🎵</div>
+          <div>
+            <div class="ov-title">${s.song_title}</div>
+            <div class="ov-artist">${s.song_artist || ''}</div>
+          </div>
+          <span class="ov-date">${dateStr}</span>
+        </div>`;
+    }).join('');
+  } catch(e) {
+    console.error(e);
+    el.innerHTML = '<div class="empty-box">불러오지 못했어요</div>';
+  }
+}
+
+loadSchedule();
+loadOverlay();
+</script>
+</body>
+</html>
