@@ -78,7 +78,6 @@
 }
 .song-table tbody tr:last-child { border-bottom: none; }
 .song-table td { padding: 11px 14px; font-size: 13px; color: var(--text); }
-.song-table td:last-child { text-align: center; }
 .table-wrap {
   background: var(--surface); border: 1.5px solid var(--border);
   border-radius: 16px; overflow: hidden;
@@ -176,11 +175,11 @@
       <table class="song-table" id="songTable" style="display:none">
         <thead>
           <tr>
-            <th data-key="artist">아티스트</th>
-            <th data-key="title">곡명</th>
-            <th data-key="level">난이도</th>
-            <th>메모</th>
-            <th>복사</th>
+            <th data-key="artist" style="width:18%;">아티스트</th>
+            <th data-key="title" style="width:auto;">곡명</th>
+            <th style="width:18%;color:var(--text-mut);">메모</th>
+            <th data-key="level" style="width:1%;white-space:nowrap;text-align:right;">난이도</th>
+            <th style="width:1%;white-space:nowrap;text-align:right;">복사</th>
           </tr>
         </thead>
         <tbody id="songBody"></tbody>
@@ -277,12 +276,12 @@ function renderTable(songs) {
     return sort.dir==='asc' ? va.localeCompare(vb,'ko') : vb.localeCompare(va,'ko');
   });
   document.getElementById('songBody').innerHTML = sorted.map((s,i) =>
-    `<tr style="background:${i%2===0?'#fff':  'var(--bg)'}">
+    `<tr style="background:${i%2===0?'#fff':'var(--bg)'}">
       <td>${esc(s.artist)}${s.is_signature?'<span class="sig-badge">🎀</span>':''}</td>
       <td>${esc(s.title)}</td>
-      <td>${stars(s.level)}</td>
-      <td style="color:var(--text-sub);font-size:12px">${esc(s.memo||'')}</td>
-      <td><button class="copy-btn" onclick="copyText('${esc(s.artist)}','${esc(s.title)}')">📋</button></td>
+      <td style="color:var(--text-sub);font-size:12px;max-width:0;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;">${esc(s.memo||'')}</td>
+      <td style="text-align:right;white-space:nowrap;">${stars(s.level)}</td>
+      <td style="text-align:right;"><button class="copy-btn" onclick="copyText('${esc(s.artist)}','${esc(s.title)}')">📋</button></td>
     </tr>`
   ).join('');
 }
