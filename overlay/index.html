@@ -136,6 +136,12 @@ function applyRolling(el, container) {
 
 async function fetchLatest() {
   try {
+    // 표시 상태 확인
+    const{data:state}=await supabaseClient.from('overlay_state').select('is_visible').eq('id',1).single();
+    const visible=state?state.is_visible!==false:true;
+    document.getElementById('bar').style.opacity=visible?'1':'0';
+    if(!visible)return;
+
     const { data, error } = await supabaseClient
       .from('recent_overlays')
       .select('*')

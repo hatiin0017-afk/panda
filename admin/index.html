@@ -263,6 +263,20 @@ tbody td{padding:9px 13px;vertical-align:middle;}
     </div>
     <div class="sc">
       <div class="sc-title">🎵 곡 목록</div>
+      <!-- 오버레이 컨트롤 한 행 -->
+      <div style="display:flex;align-items:center;gap:10px;background:var(--lav-lt);border:1.5px solid var(--lav);border-radius:12px;padding:10px 14px;margin-bottom:14px;flex-wrap:wrap;">
+        <span style="font-size:11px;font-weight:700;color:var(--lav-dk);white-space:nowrap;">🎤 오버레이</span>
+        <div style="flex:1;min-width:0;">
+          <span id="ovBarTitle" style="font-size:13px;font-weight:700;color:var(--text);">—</span>
+          <span id="ovBarArtist" style="font-size:12px;color:var(--text-sub);margin-left:6px;"></span>
+        </div>
+        <span id="ovBarStatus" style="font-size:11px;font-weight:700;padding:3px 10px;border-radius:100px;background:#DCFCE7;color:#15803D;flex-shrink:0;">표시중</span>
+        <label class="toggle" title="오버레이 표시/숨김">
+          <input type="checkbox" id="ovVisibleToggle" checked onchange="toggleOvVisible(this.checked)">
+          <span class="toggle-slider"></span>
+        </label>
+        <button onclick="copyOvUrl()" class="btn-edit" style="white-space:nowrap;">URL 복사</button>
+      </div>
       <div class="gtabs" id="songGenreTabs">
         <button class="gtab active" data-genre="all">전체</button>
         <button class="gtab" data-genre="kpop">케이팝</button>
@@ -271,11 +285,6 @@ tbody td{padding:9px 13px;vertical-align:middle;}
         <button class="gtab" data-genre="aegyo">애교송</button>
       </div>
       <div style="margin-bottom:12px;"><input type="text" id="songSearch" placeholder="🔍 검색..." oninput="filterSongs()"></div>
-      <!-- 오버레이 히스토리 인라인 -->
-      <div style="margin-bottom:14px;background:var(--lav-lt);border:1.5px solid var(--lav);border-radius:12px;padding:12px 16px;">
-        <div style="font-size:11px;font-weight:700;color:var(--lav-dk);letter-spacing:1px;margin-bottom:8px;">🎤 최근 오버레이</div>
-        <div id="ovInlineHistory" style="font-size:12px;color:var(--text-sub);">불러오는 중...</div>
-      </div>
       <div class="tw">
         <table>
           <thead><tr><th>장르</th><th>아티스트</th><th>제목</th><th>난이도</th><th>메모</th><th>시그니처</th><th>오버레이</th><th>관리</th></tr></thead>
@@ -320,11 +329,12 @@ tbody td{padding:9px 13px;vertical-align:middle;}
         <div class="coin-row">
           <span class="coin-label">Coin</span>
           <span id="coinCurrent" style="font-family:'Nunito',sans-serif;font-size:15px;font-weight:900;min-width:60px;"></span>
-          <div class="coin-toggle-row">
-            <button class="coin-dir" id="coinPlus" onclick="setCoinDir(1)">＋</button>
-            <button class="coin-dir" id="coinMinus" onclick="setCoinDir(-1)">−</button>
+          <div style="display:flex;align-items:center;gap:6px;">
+            <button class="coin-dir" id="coinMinus" onclick="adjustCoinPending(-1)">−</button>
+            <span id="coinPending" style="font-family:'Nunito',sans-serif;font-size:15px;font-weight:900;min-width:32px;text-align:center;color:var(--lav-dk);">0</span>
+            <button class="coin-dir" id="coinPlus" onclick="adjustCoinPending(1)">＋</button>
           </div>
-          <input type="number" id="coinAmt" placeholder="개수" style="width:80px;flex:none;text-align:center;" min="1">
+          <span style="font-size:11px;color:var(--text-mut);">저장 시 반영</span>
         </div>
       </div>
     </div>
@@ -440,7 +450,7 @@ function initAll(){
   const now=new Date();
   document.getElementById('sFilterMonth').value=`${now.getFullYear()}-${String(now.getMonth()+1).padStart(2,'0')}`;
   document.getElementById('upboDateAssign').value=now.toISOString().split('T')[0];
-  loadSchedules();loadSongs();loadTaskTypes();loadMembers();loadOvInlineHistory();loadInqBadge();
+  loadSchedules();loadSongs();loadTaskTypes();loadMembers();loadOvState();loadInqBadge();
 }
 
 // ── COLOR ──
@@ -672,35 +682,54 @@ async function publishOverlay(title,artist){
     await supabaseClient.from('recent_overlays').delete().in('id',all.slice(5).map(r=>r.id));
   }
   toast(`🎤 오버레이: ${title}`);
-  loadOvInlineHistory();
+  loadOvBar();
 }
 
-async function loadOvInlineHistory(){
-  const{data}=await supabaseClient.from('recent_overlays').select('*').order('played_at',{ascending:false}).limit(5);
-  const el=document.getElementById('ovInlineHistory');
-  if(!data||!data.length){el.textContent='기록 없음';return;}
-  el.innerHTML=data.map((r,i)=>{
-    const d=new Date(r.played_at);
-    const ds=`${d.getMonth()+1}/${d.getDate()} ${String(d.getHours()).padStart(2,'0')}:${String(d.getMinutes()).padStart(2,'0')}`;
-    return `<div style="display:flex;align-items:center;gap:8px;padding:4px 0;border-bottom:1px solid var(--border);">
-      <span style="font-family:'Nunito',sans-serif;font-weight:700;color:var(--text-mut);font-size:12px;min-width:18px;">0${i+1}</span>
-      <span style="font-weight:600;font-size:12px;flex:1;">${r.song_title}</span>
-      <span style="font-size:11px;color:var(--text-sub);">${r.song_artist||''}</span>
-      <span style="font-size:10px;color:var(--text-mut);">${ds}</span>
-      <button class="btn-del" style="padding:3px 8px;font-size:11px;" onclick="delOverlay(${r.id})">✕</button>
-    </div>`;
-  }).join('');
+async function loadOvBar(){
+  const{data}=await supabaseClient.from('recent_overlays').select('*').order('played_at',{ascending:false}).limit(1);
+  if(!data||!data.length){
+    document.getElementById('ovBarTitle').textContent='—';
+    document.getElementById('ovBarArtist').textContent='';
+    return;
+  }
+  const r=data[0];
+  document.getElementById('ovBarTitle').textContent=r.song_title||'—';
+  document.getElementById('ovBarArtist').textContent=r.song_artist||'';
 }
 
-async function delOverlay(id){
-  await supabaseClient.from('recent_overlays').delete().eq('id',id);
-  toast('🗑️ 삭제됨');loadOvInlineHistory();
+async function toggleOvVisible(checked){
+  const statusEl=document.getElementById('ovBarStatus');
+  // overlay_state 테이블에 visible 상태 저장
+  await supabaseClient.from('overlay_state').upsert({id:1,is_visible:checked},{onConflict:'id'});
+  statusEl.textContent=checked?'표시중':'숨김';
+  statusEl.style.background=checked?'#DCFCE7':'#F3F4F6';
+  statusEl.style.color=checked?'#15803D':'#6B7280';
+  toast(checked?'🎤 오버레이 표시':'오버레이 숨김');
+}
+
+async function loadOvState(){
+  await loadOvBar();
+  const{data}=await supabaseClient.from('overlay_state').select('*').eq('id',1).single().catch(()=>({data:null}));
+  const visible=data?data.is_visible!==false:true;
+  const tog=document.getElementById('ovVisibleToggle');
+  const statusEl=document.getElementById('ovBarStatus');
+  if(tog)tog.checked=visible;
+  if(statusEl){
+    statusEl.textContent=visible?'표시중':'숨김';
+    statusEl.style.background=visible?'#DCFCE7':'#F3F4F6';
+    statusEl.style.color=visible?'#15803D':'#6B7280';
+  }
+}
+
+function copyOvUrl(){
+  const url=location.origin+'/overlay/';
+  navigator.clipboard.writeText(url).then(()=>toast('오버레이 URL 복사됨!')).catch(()=>toast('복사 실패'));
 }
 
 // ════════════════════════
 // UPBO
 // ════════════════════════
-let taskTypes=[],allMembers=[],selMemberId=null,memberTaskState={},coinDir=1;
+let taskTypes=[],allMembers=[],selMemberId=null,memberTaskState={},coinPending=0;
 
 async function loadTaskTypes(){
   const{data}=await supabaseClient.from('upbo_task_types').select('*').order('sort_order').order('id');
@@ -841,13 +870,12 @@ async function saveMemberEdit(id){
 
 async function selectMember(id){
   selMemberId=id;
+  coinPending=0;
   const m=allMembers.find(x=>x.id===id);
   document.getElementById('assignTitle').textContent=`${m.nickname} 업보 부여`;
   document.getElementById('coinCurrent').textContent=`${m.coins||0}개`;
-  document.getElementById('coinAmt').value='';
-  coinDir=1;
-  document.getElementById('coinPlus').className='coin-dir active-plus';
-  document.getElementById('coinMinus').className='coin-dir';
+  document.getElementById('coinPending').textContent='0';
+  document.getElementById('coinPending').style.color='var(--text-mut)';
   renderAssignMemberGrid(allMembers.filter(x=>{
     const q=document.getElementById('assignSearch').value.toLowerCase();
     return !q||x.nickname.toLowerCase().includes(q)||x.user_id.toLowerCase().includes(q);
@@ -856,10 +884,12 @@ async function selectMember(id){
   await loadMemberTasks();
 }
 
-function setCoinDir(dir){
-  coinDir=dir;
-  document.getElementById('coinPlus').className='coin-dir'+(dir===1?' active-plus':'');
-  document.getElementById('coinMinus').className='coin-dir'+(dir===-1?' active-minus':'');
+function adjustCoinPending(delta){
+  if(!selMemberId){toast('시청자를 먼저 선택해주세요');return;}
+  coinPending+=delta;
+  const el=document.getElementById('coinPending');
+  el.textContent=(coinPending>=0?'+':'')+coinPending;
+  el.style.color=coinPending>0?'var(--green-dk)':coinPending<0?'var(--red-dk)':'var(--text-mut)';
 }
 
 async function loadMemberTasks(){
@@ -904,14 +934,15 @@ async function saveTasks(){
     }
   }
   // 코인 처리
-  const coinAmt=parseInt(document.getElementById('coinAmt').value);
-  if(!isNaN(coinAmt)&&coinAmt>0){
+  if(coinPending!==0){
     const member=allMembers.find(m=>m.id===selMemberId);
-    const newCoins=Math.max(0,(member.coins||0)+(coinDir*coinAmt));
+    const newCoins=Math.max(0,(member.coins||0)+coinPending);
     await supabaseClient.from('upbo_members').update({coins:newCoins}).eq('id',selMemberId);
     document.getElementById('coinCurrent').textContent=`${newCoins}개`;
-    document.getElementById('coinAmt').value='';
-    toast(`💾 저장! 🪙 ${coinDir===1?'+':'−'}${coinAmt} → ${newCoins}개`);
+    toast(`💾 저장! Coin ${coinPending>=0?'+':''}${coinPending} → ${newCoins}개`);
+    coinPending=0;
+    document.getElementById('coinPending').textContent='0';
+    document.getElementById('coinPending').style.color='var(--text-mut)';
   }else{
     toast('💾 저장 완료!');
   }
