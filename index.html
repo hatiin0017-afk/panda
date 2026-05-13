@@ -258,9 +258,9 @@ footer {
   </div>
 </div>
 
-<!-- 최근 오버레이 -->
+<!-- 최근 부른 곡 -->
 <div class="section" style="margin-bottom:0">
-  <div class="sec-label">최근 오버레이</div>
+  <div class="sec-label">최근 부른 곡</div>
   <div id="overlay-list" class="overlay-list">
     <div class="loading">불러오는 중...</div>
   </div>
@@ -285,18 +285,15 @@ async function loadSchedule() {
   try {
     const today = new Date();
     today.setHours(0,0,0,0);
-    const limit = new Date(today);
-    limit.setDate(today.getDate() + 3);
     const todayStr = today.toISOString().split('T')[0];
-    const limitStr = limit.toISOString().split('T')[0];
 
     const { data, error } = await supabaseClient
       .from('schedules')
       .select('*')
       .gte('event_date', todayStr)
-      .lt('event_date', limitStr)
       .order('event_date')
-      .order('event_time');
+      .order('event_time')
+      .limit(3);
 
     if (error) throw error;
 
