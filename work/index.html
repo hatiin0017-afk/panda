@@ -40,7 +40,7 @@
 }
 .member-info { flex-shrink: 0; min-width: 90px; }
 .member-nick {
-  font-size: 14px; font-weight: 700; color: var(--text); line-height: 1.2;
+  font-size: 16px; font-weight: 700; color: var(--text); line-height: 1.2;
 }
 .member-id {
   font-size: 11px; color: var(--text-mut); margin-top: 2px;
@@ -199,7 +199,7 @@ function render(members) {
         ${t.memo?`<span class="task-memo">(${esc(t.memo)})</span>`:''}
       </span>`;
     }).join('');
-    const coinHtml = m.coins > 0 ? `<div class="member-coins">🪙 ${m.coins}개</div>` : '';
+    const coinHtml = m.coins > 0 ? `<div class="member-coins">Coin ${m.coins}개</div>` : '';
     return `<div class="member-card fade-up">
       <div class="member-info">
         <div class="member-nick">${esc(m.nickname)}</div>

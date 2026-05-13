@@ -50,9 +50,13 @@ html, body {
 .song-info {
   overflow: hidden;
   max-width: 460px;
-  padding: 0 14px;
+  padding: 0 16px;
   flex: 1;
   min-width: 0;
+  display: flex;
+  flex-direction: column;
+  justify-content: center;
+  gap: 2px;
 }
 .song-title-wrap {
   white-space: nowrap;
@@ -61,24 +65,24 @@ html, body {
 .song-title-text {
   display: inline-block;
   font-family: 'Noto Sans KR', sans-serif;
-  font-size: 18px; font-weight: 700;
+  font-size: 22px; font-weight: 700;
   color: #3D2F60;
   white-space: nowrap;
 }
 .song-artist {
-  font-family: 'Nunito', sans-serif;
-  font-size: 13px; font-weight: 700;
+  font-family: 'Noto Sans KR', sans-serif;
+  font-size: 13px; font-weight: 500;
   color: #A78BDB;
-  margin-top: 3px;
   white-space: nowrap;
   overflow: hidden;
   text-overflow: ellipsis;
+  display: flex;
+  align-items: center;
+  gap: 4px;
 }
-.note-icon {
-  font-size: 13px;
-  margin-right: 4px;
-  opacity: 0.6;
-}
+.artist-name { color: #9183B0; }
+.artist-sep  { font-size: 11px; opacity: .5; }
+.singer-name { color: #A78BDB; font-weight: 700; }
 
 @keyframes rolling {
   0% { transform: translateX(0); }
@@ -166,8 +170,8 @@ async function fetchLatest() {
     const title = row.song_title || '';
     const artist = row.song_artist || '';
 
-    titleEl.textContent = `🎵 ${title}`;
-    artistEl.textContent = artist;
+    titleEl.textContent = title;
+    artistEl.innerHTML = `<span class="artist-name">${artist}</span><span class="artist-sep">🎵</span><span class="singer-name">판다율</span>`;
 
     // 롤링 체크
     applyRolling(titleEl, titleWrap);
