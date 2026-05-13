@@ -654,7 +654,10 @@ function editSong(id){
       <div><label>제목</label><input type="text" id="eTitle2" value="${s.title}"></div>
       <div><label>난이도</label><div class="star-row" id="eStars">${starHtml}</div><input type="hidden" id="eLevel" value="${s.level||0}"></div>
       <div><label>메모</label><input type="text" id="eMemo" value="${s.memo||''}"></div>
-      <div><label style="display:flex;align-items:center;gap:8px;cursor:pointer;font-size:12px;color:var(--text-sub);font-weight:600;"><input type="checkbox" id="eSig"${s.is_signature?' checked':''}> 시그니처</label></div>
+      <div style="display:flex;align-items:center;gap:8px;cursor:pointer;" onclick="document.getElementById('eSig').click()">
+        <input type="checkbox" id="eSig"${s.is_signature?' checked':''} onclick="event.stopPropagation()">
+        <span style="font-size:12px;color:var(--text-sub);font-weight:600;">시그니처</span>
+      </div>
       <div style="text-align:right;"><button class="btn btn-add" onclick="saveSongEdit(${id})">저장</button></div>
     </div>`;
   document.getElementById('editModal').classList.add('open');
