@@ -1062,12 +1062,14 @@ function renderAssignMemberGrid(list){
   if(!list.length){el.innerHTML='<div style="color:var(--text-mut);font-size:13px;">시청자가 없어요</div>';return;}
   el.innerHTML=list.map(m=>`
     <button class="member-card-btn${selMemberId===m.id?' selected':''}" data-id="${m.id}" onclick="selectMember(${m.id})" draggable="true">
-      <div style="display:flex;align-items:center;gap:4px;margin-bottom:4px;">
+      <div style="display:flex;align-items:center;gap:4px;margin-bottom:3px;">
         <span style="color:var(--text-mut);font-size:13px;cursor:grab;">⠿</span>
         <div class="mc-nick">${m.nickname}</div>
       </div>
-      <div class="mc-id">${m.user_id}</div>
-      <div class="mc-coin">Coin ${m.coins||0}개</div>
+      <div style="display:flex;align-items:center;justify-content:space-between;">
+        <div class="mc-id">${m.user_id}</div>
+        <div class="mc-coin">Coin ${m.coins||0}</div>
+      </div>
     </button>`).join('');
   initAssignGridDragDrop();
 }
