@@ -238,10 +238,10 @@ async function loadSongs() {
   document.getElementById('sigSection').style.display = 'none';
 
   try {
-    const query = supabaseClient.from('songs').select('*').order('artist');
+    const query = supabaseClient.from('songs').select('*').order('artist',{ascending:true}).order('title',{ascending:true});
     const { data, error } = currentGenre === 'all' ? await query : await query.eq('genre', currentGenre);
     if (error) throw error;
-    allSongs = data || [];
+    allSongs = (data || []).sort((a,b) => a.artist.localeCompare(b.artist,'ko') || a.title.localeCompare(b.title,'ko'));
     loading.style.display = 'none';
 
     const label = { all:'전체', kpop:'케이팝', jpop:'제이팝', pop:'팝', aegyo:'애교송' };

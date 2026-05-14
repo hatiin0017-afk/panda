@@ -695,9 +695,10 @@ document.addEventListener('DOMContentLoaded',()=>{
 });
 
 async function loadSongs(){
-  const q=supabaseClient.from('songs').select('*').order('artist');
+  const q=supabaseClient.from('songs').select('*').order('artist',{ascending:true}).order('title',{ascending:true});
   const{data}=curSongGenre==='all'?await q:await q.eq('genre',curSongGenre);
-  allSongs=data||[];renderSongTable(allSongs);
+  allSongs=(data||[]).sort((a,b)=>a.artist.localeCompare(b.artist,'ko')||a.title.localeCompare(b.title,'ko'));
+  renderSongTable(allSongs);
 }
 
 const GENRE_LABEL={kpop:'케이팝',jpop:'제이팝',pop:'팝',aegyo:'애교송'};
