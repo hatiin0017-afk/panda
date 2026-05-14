@@ -863,13 +863,73 @@ async function loadTaskTypes(){
 function renderTypeList(){
   const el=document.getElementById('typeList');
   if(!taskTypes.length){el.innerHTML='<div style="color:var(--text-mut);font-size:13px;">업보가 없어요</div>';return;}
-  el.innerHTML='<div style="display:flex;flex-direction:column;gap:6px;">'+taskTypes.map(t=>`
-    <div style="display:flex;align-items:center;gap:10px;padding:9px 14px;background:var(--bg);border:1.5px solid var(--border);border-radius:10px;">
+
+  el.innerHTML=`<div id="typeListInner" style="display:flex;flex-direction:column;gap:6px;">
+    ${taskTypes.map(t=>`
+    <div class="type-drag-item" draggable="true" data-id="${t.id}"
+      style="display:flex;align-items:center;gap:10px;padding:9px 14px;background:var(--bg);border:1.5px solid var(--border);border-radius:10px;cursor:grab;transition:all .15s;user-select:none;">
+      <span style="color:var(--text-mut);font-size:16px;cursor:grab;flex-shrink:0;">⠿</span>
       <span class="badge" style="background:${t.category==='event'?'#FDE8F0':'var(--lav-lt)'};color:${t.category==='event'?'#BE185D':'var(--lav-dk)'};">${t.category==='event'?'이벤트':'일반'}</span>
       <span style="font-size:13px;font-weight:600;flex:1;">${t.name}</span>
       <button class="btn-edit" onclick="editTaskType(${t.id})">수정</button>
       <button class="btn-del" onclick="delTaskType(${t.id})">삭제</button>
-    </div>`).join('')+'</div>';
+    </div>`).join('')}
+  </div>`;
+
+  // 드래그앤드랍 초기화
+  initTypeDragDrop();
+}
+
+function initTypeDragDrop(){
+  const container=document.getElementById('typeListInner');
+  if(!container)return;
+  let dragEl=null;
+
+  container.querySelectorAll('.type-drag-item').forEach(item=>{
+    item.addEventListener('dragstart',e=>{
+      dragEl=item;
+      item.style.opacity='.4';
+      e.dataTransfer.effectAllowed='move';
+    });
+    item.addEventListener('dragend',()=>{
+      dragEl=null;
+      item.style.opacity='1';
+      // 순서 저장
+      saveTypeOrder();
+    });
+    item.addEventListener('dragover',e=>{
+      e.preventDefault();
+      if(!dragEl||dragEl===item)return;
+      const rect=item.getBoundingClientRect();
+      const mid=rect.top+rect.height/2;
+      if(e.clientY<mid) container.insertBefore(dragEl,item);
+      else container.insertBefore(dragEl,item.nextSibling);
+    });
+    item.addEventListener('dragenter',e=>{
+      e.preventDefault();
+      if(item!==dragEl)item.style.background='var(--lav-lt)';
+    });
+    item.addEventListener('dragleave',()=>{
+      item.style.background='var(--bg)';
+    });
+    item.addEventListener('drop',()=>{
+      item.style.background='var(--bg)';
+    });
+  });
+}
+
+async function saveTypeOrder(){
+  const container=document.getElementById('typeListInner');
+  if(!container)return;
+  const items=[...container.querySelectorAll('.type-drag-item')];
+  const updates=items.map((el,i)=>({id:parseInt(el.dataset.id),sort_order:i}));
+  // 순서 업데이트
+  await Promise.all(updates.map(u=>
+    supabaseClient.from('upbo_task_types').update({sort_order:u.sort_order}).eq('id',u.id)
+  ));
+  // taskTypes 배열도 동기화
+  taskTypes=updates.map(u=>taskTypes.find(t=>t.id===u.id)).filter(Boolean);
+  toast('✅ 순서 저장됨');
 }
 
 async function addTaskType(){
