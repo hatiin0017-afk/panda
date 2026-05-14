@@ -972,7 +972,7 @@ async function saveTaskTypeEdit(id){
 }
 
 async function loadMembers(){
-  const{data}=await supabaseClient.from('upbo_members').select('*').order('created_at');
+  const{data}=await supabaseClient.from('upbo_members').select('*').order('sort_order').order('created_at');
   allMembers=data||[];
   renderMemberList(allMembers);
   renderAssignMemberGrid(allMembers);
@@ -981,8 +981,11 @@ async function loadMembers(){
 function renderMemberList(list){
   const el=document.getElementById('memberList');
   if(!list.length){el.innerHTML='<div style="color:var(--text-mut);font-size:13px;">시청자가 없어요</div>';return;}
-  el.innerHTML=list.map(m=>`
-    <div class="member-row" style="display:flex;align-items:center;gap:10px;padding:11px 14px;background:var(--bg);border:1.5px solid var(--border);border-radius:12px;margin-bottom:8px;">
+  el.innerHTML=`<div id="memberListInner" style="display:flex;flex-direction:column;gap:6px;">
+    ${list.map(m=>`
+    <div class="member-drag-item" draggable="true" data-id="${m.id}"
+      style="display:flex;align-items:center;gap:10px;padding:11px 14px;background:var(--bg);border:1.5px solid var(--border);border-radius:12px;cursor:default;transition:all .15s;user-select:none;">
+      <span style="color:var(--text-mut);font-size:16px;cursor:grab;flex-shrink:0;">⠿</span>
       <div style="flex:1;">
         <div style="font-size:14px;font-weight:600;">${m.nickname}</div>
         <div style="font-size:11px;color:var(--text-sub);">${m.user_id}</div>
@@ -990,18 +993,112 @@ function renderMemberList(list){
       <span class="badge" style="background:var(--yellow);color:#92400E;">Coin ${m.coins||0}</span>
       <button class="btn-edit" onclick="editMember(${m.id})">수정</button>
       <button class="btn-del" onclick="delMember(${m.id})">삭제</button>
-    </div>`).join('');
+    </div>`).join('')}
+  </div>`;
+  initMemberDragDrop();
+}
+
+function initMemberDragDrop(){
+  const container=document.getElementById('memberListInner');
+  if(!container)return;
+  let dragEl=null;
+
+  container.querySelectorAll('.member-drag-item').forEach(item=>{
+    item.addEventListener('dragstart',e=>{
+      dragEl=item;
+      item.style.opacity='.4';
+      e.dataTransfer.effectAllowed='move';
+    });
+    item.addEventListener('dragend',()=>{
+      dragEl=null;
+      item.style.opacity='1';
+      saveMemberOrder();
+    });
+    item.addEventListener('dragover',e=>{
+      e.preventDefault();
+      if(!dragEl||dragEl===item)return;
+      const rect=item.getBoundingClientRect();
+      if(e.clientY<rect.top+rect.height/2) container.insertBefore(dragEl,item);
+      else container.insertBefore(dragEl,item.nextSibling);
+    });
+    item.addEventListener('dragenter',e=>{
+      e.preventDefault();
+      if(item!==dragEl)item.style.background='var(--lav-lt)';
+    });
+    item.addEventListener('dragleave',()=>{ item.style.background='var(--bg)'; });
+    item.addEventListener('drop',()=>{ item.style.background='var(--bg)'; });
+  });
+}
+
+async function saveMemberOrder(){
+  const container=document.getElementById('memberListInner');
+  if(!container)return;
+  const items=[...container.querySelectorAll('.member-drag-item')];
+  await Promise.all(items.map((el,i)=>
+    supabaseClient.from('upbo_members').update({sort_order:i}).eq('id',parseInt(el.dataset.id))
+  ));
+  // allMembers 동기화
+  allMembers=items.map(el=>allMembers.find(m=>m.id===parseInt(el.dataset.id))).filter(Boolean);
+  renderAssignMemberGrid(allMembers);
+  toast('✅ 순서 저장됨');
 }
 
 function renderAssignMemberGrid(list){
   const el=document.getElementById('assignMemberGrid');
   if(!list.length){el.innerHTML='<div style="color:var(--text-mut);font-size:13px;">시청자가 없어요</div>';return;}
   el.innerHTML=list.map(m=>`
-    <button class="member-card-btn${selMemberId===m.id?' selected':''}" onclick="selectMember(${m.id})">
-      <div class="mc-nick">${m.nickname}</div>
+    <button class="member-card-btn${selMemberId===m.id?' selected':''}" data-id="${m.id}" onclick="selectMember(${m.id})" draggable="true">
+      <div style="display:flex;align-items:center;gap:4px;margin-bottom:4px;">
+        <span style="color:var(--text-mut);font-size:13px;cursor:grab;">⠿</span>
+        <div class="mc-nick">${m.nickname}</div>
+      </div>
       <div class="mc-id">${m.user_id}</div>
       <div class="mc-coin">Coin ${m.coins||0}개</div>
     </button>`).join('');
+  initAssignGridDragDrop();
+}
+
+function initAssignGridDragDrop(){
+  const container=document.getElementById('assignMemberGrid');
+  if(!container)return;
+  let dragEl=null;
+
+  container.querySelectorAll('.member-card-btn').forEach(item=>{
+    item.addEventListener('dragstart',e=>{
+      dragEl=item;
+      item.style.opacity='.4';
+      e.dataTransfer.effectAllowed='move';
+    });
+    item.addEventListener('dragend',()=>{
+      dragEl=null;
+      item.style.opacity='1';
+      saveAssignOrder();
+    });
+    item.addEventListener('dragover',e=>{
+      e.preventDefault();
+      if(!dragEl||dragEl===item)return;
+      const rect=item.getBoundingClientRect();
+      if(e.clientX<rect.left+rect.width/2) container.insertBefore(dragEl,item);
+      else container.insertBefore(dragEl,item.nextSibling);
+    });
+    item.addEventListener('dragenter',e=>{
+      e.preventDefault();
+      if(item!==dragEl)item.style.borderColor='var(--lav-dk)';
+    });
+    item.addEventListener('dragleave',()=>{ item.style.borderColor=''; });
+    item.addEventListener('drop',()=>{ item.style.borderColor=''; });
+  });
+}
+
+async function saveAssignOrder(){
+  const container=document.getElementById('assignMemberGrid');
+  if(!container)return;
+  const items=[...container.querySelectorAll('.member-card-btn')];
+  await Promise.all(items.map((el,i)=>
+    supabaseClient.from('upbo_members').update({sort_order:i}).eq('id',parseInt(el.dataset.id))
+  ));
+  allMembers=items.map(el=>allMembers.find(m=>m.id===parseInt(el.dataset.id))).filter(Boolean);
+  toast('✅ 순서 저장됨');
 }
 
 function filterAssignMembers(){
