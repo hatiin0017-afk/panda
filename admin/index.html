@@ -464,9 +464,11 @@ tbody td.col-action{white-space:nowrap;text-align:right;}
 
     <!-- 응답 현황 -->
     <div class="sub-page" id="form-responses">
+      <!-- 투표 차트 -->
+      <div id="voteCharts"></div>
       <div class="sc">
         <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:14px;flex-wrap:wrap;gap:8px;">
-          <div class="sc-title" style="margin-bottom:0;">📊 응답 목록</div>
+          <div class="sc-title" style="margin-bottom:0;">📋 응답 목록</div>
           <div style="display:flex;gap:8px;">
             <button class="btn btn-add" onclick="loadResponses()">새로고침</button>
             <button class="btn-del" onclick="clearResponses()">전체 삭제</button>
@@ -1318,18 +1320,58 @@ async function loadResponses(){
   const rows=subs||[];
   document.getElementById('responseCount').textContent=`총 ${rows.length}개 응답`;
 
-  // 헤더 구성
+  // 필드 구성
   const fields=[];
-  for(let i=1;i<=5;i++){if(c[`field_${i}_label`]&&c[`field_${i}_active`]!==false)fields.push({idx:i,label:c[`field_${i}_label`]});}
+  for(let i=1;i<=5;i++){
+    if(c[`field_${i}_label`]&&c[`field_${i}_active`]!==false){
+      fields.push({idx:i,label:c[`field_${i}_label`],type:c[`field_${i}_type`]||'text'});
+    }
+  }
+
+  // ── 투표 차트 ──
+  const voteFields=fields.filter(f=>f.type==='vote');
+  const chartEl=document.getElementById('voteCharts');
+  if(voteFields.length&&rows.length){
+    const BAR_COLORS=['#D8C9FF','#FFD6EC','#FDE68A','#86EFAC','#93C5FD'];
+    chartEl.innerHTML=voteFields.map(f=>{
+      // 집계
+      const counts={};
+      rows.forEach(r=>{const v=r[`field_${f.idx}`];if(v)counts[v]=(counts[v]||0)+1;});
+      const total=Object.values(counts).reduce((a,b)=>a+b,0)||1;
+      const sorted=Object.entries(counts).sort((a,b)=>b[1]-a[1]);
+      const bars=sorted.map(([opt,cnt],i)=>{
+        const pct=Math.round(cnt/total*100);
+        return `<div style="margin-bottom:10px;">
+          <div style="display:flex;justify-content:space-between;font-size:12px;font-weight:600;margin-bottom:4px;">
+            <span style="color:var(--text);">${opt}</span>
+            <span style="color:var(--text-sub);">${cnt}표 (${pct}%)</span>
+          </div>
+          <div style="height:24px;background:var(--bg);border-radius:100px;overflow:hidden;border:1px solid var(--border);">
+            <div style="height:100%;width:${pct}%;background:${BAR_COLORS[i%BAR_COLORS.length]};border-radius:100px;transition:width .6s ease;"></div>
+          </div>
+        </div>`;
+      }).join('');
+      return `<div class="sc" style="margin-bottom:14px;">
+        <div style="display:flex;align-items:center;gap:8px;margin-bottom:14px;">
+          <div class="sc-title" style="margin-bottom:0;">📊 ${f.label}</div>
+          <span style="font-size:11px;color:var(--text-mut);">총 ${Object.values(counts).reduce((a,b)=>a+b,0)}표</span>
+        </div>
+        ${bars||'<div style="color:var(--text-mut);font-size:13px;">응답 없음</div>'}
+      </div>`;
+    }).join('');
+  }else{
+    chartEl.innerHTML='';
+  }
+
+  // ── 응답 테이블 ──
   const headCols=['닉네임',...fields.map(f=>f.label),'제출시간'];
   document.getElementById('responseHead').innerHTML='<tr>'+headCols.map(h=>`<th>${h}</th>`).join('')+'</tr>';
-
   if(!rows.length){document.getElementById('responseBody').innerHTML=`<tr class="empty-row"><td colspan="${headCols.length}">응답이 없어요</td></tr>`;return;}
   document.getElementById('responseBody').innerHTML=rows.map(r=>{
     const d=new Date(r.created_at);
     const ds=`${d.getMonth()+1}/${d.getDate()} ${String(d.getHours()).padStart(2,'0')}:${String(d.getMinutes()).padStart(2,'0')}`;
-    const cells=[r.nickname||'-',...fields.map(f=>r[`field_${f.idx}`]||'-'),ds];
-    return '<tr>'+cells.map(c=>`<td>${c}</td>`).join('')+'</tr>';
+    const cells=[r.nickname||'익명',...fields.map(f=>r[`field_${f.idx}`]||'-'),ds];
+    return '<tr>'+cells.map(v=>`<td>${v}</td>`).join('')+'</tr>';
   }).join('');
 }
 
