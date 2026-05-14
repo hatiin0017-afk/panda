@@ -88,7 +88,11 @@ body{background:var(--bg);font-family:'Noto Sans KR',sans-serif;color:var(--text
 <script src="/js/supabase-config.js"></script>
 <script>
 let formConfig=null;
-let voteSelections={}; // {fieldIndex: optionText}
+let voteSelections={};
+
+function getStorageKey(configId){ return `panda_form_submitted_${configId}`; }
+function markSubmitted(configId){ localStorage.setItem(getStorageKey(configId),'1'); }
+function isSubmitted(configId){ return !!localStorage.getItem(getStorageKey(configId)); }
 
 async function init(){
   const{data,error}=await supabaseClient.from('form_config').select('*').eq('is_active',true).limit(1);
@@ -105,10 +109,13 @@ async function init(){
   document.getElementById('eventNameBadge').textContent=formConfig.event_name||'이벤트 폼';
   document.title=`판다율 🩷 ${formConfig.event_name||'이벤트 폼'}`;
 
-  // 투표 선택지 로드
+  // 이미 제출했으면 완료 화면
+  if(isSubmitted(formConfig.id)){
+    showDone(true);return;
+  }
+
   const{data:opts}=await supabaseClient.from('vote_options').select('*').eq('config_id',formConfig.id).order('field_index').order('display_order');
   formConfig._voteOpts=opts||[];
-
   renderForm();
 }
 
@@ -121,7 +128,10 @@ function renderForm(){
     html+=`<div class="field-group">
       <label class="field-label">닉네임<span class="req">*</span></label>
       <input class="field-input" type="text" id="f_nickname" placeholder="닉네임을 입력해주세요">
-      <div class="err-msg" id="err_nickname">닉네임을 입력해주세요</div>
+      <div class="err-msg" id="err_nickname"></div>
+      <label style="display:flex;align-items:center;gap:6px;margin-top:8px;cursor:pointer;font-size:12px;color:var(--text-sub);font-weight:600;">
+        <input type="checkbox" id="anonCheck" onchange="toggleAnon(this.checked)"> 익명으로 제출
+      </label>
     </div>`;
   }
 
@@ -165,6 +175,16 @@ function renderForm(){
   document.getElementById('formArea').innerHTML=html;
 }
 
+function toggleAnon(checked){
+  const nickEl=document.getElementById('f_nickname');
+  if(!nickEl)return;
+  nickEl.disabled=checked;
+  nickEl.value=checked?'':nickEl.value;
+  nickEl.placeholder=checked?'익명으로 제출됩니다':'닉네임을 입력해주세요';
+  nickEl.classList.remove('error');
+  document.getElementById('err_nickname').style.display='none';
+}
+
 function selectVote(fieldIdx, optText, el){
   voteSelections[fieldIdx]=optText;
   document.querySelectorAll(`#vote_${fieldIdx} .vote-opt`).forEach(e=>e.classList.remove('selected'));
@@ -173,52 +193,58 @@ function selectVote(fieldIdx, optText, el){
 
 async function submitForm(){
   const c=formConfig;
-  let valid=true;
+  const isAnon=document.getElementById('anonCheck')?.checked||false;
+  const nickEl=document.getElementById('f_nickname');
+  const errEl=document.getElementById('err_nickname');
 
   // 닉네임 검증
-  const nickEl=document.getElementById('f_nickname');
-  if(nickEl&&!nickEl.value.trim()){
+  if(!isAnon&&nickEl&&!nickEl.value.trim()){
     nickEl.classList.add('error');
-    document.getElementById('err_nickname').style.display='block';
-    valid=false;
-  }else if(nickEl){
-    nickEl.classList.remove('error');
-    document.getElementById('err_nickname').style.display='none';
+    errEl.textContent='닉네임을 입력해주세요';
+    errEl.style.display='block';
+    return;
   }
-  if(!valid)return;
+  if(nickEl){nickEl.classList.remove('error');errEl.style.display='none';}
+
+  const nickname=isAnon?'익명':(nickEl?.value.trim()||null);
+
+  // 닉네임 중복 체크 (익명 제외)
+  if(!isAnon&&nickname){
+    const{data:dup}=await supabaseClient.from('form_submissions')
+      .select('id').eq('config_id',c.id).eq('nickname',nickname).limit(1);
+    if(dup&&dup.length){
+      nickEl.classList.add('error');
+      errEl.textContent='이미 제출한 닉네임이에요';
+      errEl.style.display='block';
+      return;
+    }
+  }
 
   const btn=document.querySelector('.submit-btn');
   btn.disabled=true;btn.textContent='제출 중...';
 
-  const row={
-    config_id:c.id,
-    nickname:document.getElementById('f_nickname')?.value.trim()||null,
-    contact:document.getElementById('f_contact')?.value.trim()||null,
-  };
+  const row={config_id:c.id,nickname,contact:document.getElementById('f_contact')?.value.trim()||null};
   for(let i=1;i<=5;i++){
     const label=c[`field_${i}_label`];
     const type=c[`field_${i}_type`];
     const active=c[`field_${i}_active`];
     if(!label||active===false){row[`field_${i}`]=null;continue;}
-    if(type==='text'){
-      row[`field_${i}`]=document.getElementById(`f_field_${i}`)?.value.trim()||null;
-    }else if(type==='vote'){
-      row[`field_${i}`]=voteSelections[i]||null;
-    }
+    row[`field_${i}`]=type==='text'?(document.getElementById(`f_field_${i}`)?.value.trim()||null):(voteSelections[i]||null);
   }
 
   const{error}=await supabaseClient.from('form_submissions').insert([row]);
-  if(error){
-    btn.disabled=false;btn.textContent='제출하기 🩷';
-    alert('제출 실패: '+error.message);return;
-  }
+  if(error){btn.disabled=false;btn.textContent='제출하기 🩷';alert('제출 실패: '+error.message);return;}
 
-  // 완료 화면
+  markSubmitted(c.id);
+  showDone(false);
+}
+
+function showDone(alreadyDone){
   document.getElementById('formArea').innerHTML=`
     <div class="done">
-      <div class="done-icon">🩷</div>
-      <div class="done-title">제출 완료!</div>
-      <div class="done-sub">참여해주셔서 감사해요, 율팡이!<br>판다율이 확인할게요 🐼</div>
+      <div class="done-icon">${alreadyDone?'✅':'🩷'}</div>
+      <div class="done-title">${alreadyDone?'이미 제출하셨어요!':'제출 완료!'}</div>
+      <div class="done-sub">${alreadyDone?'이미 참여해주셨어요, 율팡이!<br>중복 제출은 불가해요 🐼':'참여해주셔서 감사해요, 율팡이!<br>판다율이 확인할게요 🐼'}</div>
     </div>`;
 }
 
