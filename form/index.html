@@ -1,0 +1,228 @@
+<!DOCTYPE html>
+<html lang="ko">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>판다율 🩷 이벤트 폼</title>
+<link rel="icon" type="image/svg+xml" href="/assets/favicon.svg">
+<script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
+<link href="https://fonts.googleapis.com/css2?family=Nunito:wght@700;800;900&family=Noto+Sans+KR:wght@400;500;700&display=swap" rel="stylesheet">
+<style>
+:root{
+  --bg:#FEFCE8;--surface:#FFFFFF;--lav:#D8C9FF;--lav-dk:#A78BDB;--lav-lt:#F3EEFF;
+  --yellow:#FDE68A;--pink:#FFD6EC;--pink-lt:#FFF4FA;
+  --text:#3D2F60;--text-sub:#9183B0;--text-mut:#C0B6D6;--border:#EDE6FF;
+}
+*{box-sizing:border-box;margin:0;padding:0;}
+body{background:var(--bg);font-family:'Noto Sans KR',sans-serif;color:var(--text);min-height:100vh;display:flex;flex-direction:column;align-items:center;padding:40px 20px 60px;}
+
+.card{background:var(--surface);border:1.5px solid var(--border);border-radius:24px;width:100%;max-width:520px;box-shadow:0 4px 24px rgba(167,139,219,.12);overflow:hidden;}
+
+/* 헤더 */
+.card-header{background:linear-gradient(135deg,var(--lav-lt) 0%,var(--yellow) 100%);padding:32px 28px 24px;text-align:center;position:relative;}
+.avatar{width:72px;height:72px;border-radius:50%;background:linear-gradient(135deg,var(--lav),var(--pink-lt));border:2.5px solid var(--lav-dk);display:flex;align-items:center;justify-content:center;font-size:36px;margin:0 auto 12px;}
+.streamer-name{font-family:'Nunito',sans-serif;font-size:22px;font-weight:900;background:linear-gradient(135deg,#A78BDB,#E88BB5);-webkit-background-clip:text;-webkit-text-fill-color:transparent;background-clip:text;}
+.streamer-tag{font-size:12px;color:var(--text-sub);margin-top:3px;}
+.event-name{margin-top:16px;display:inline-block;background:var(--lav);color:var(--text);font-size:13px;font-weight:700;padding:6px 18px;border-radius:100px;}
+
+/* 폼 바디 */
+.card-body{padding:28px;}
+.field-group{margin-bottom:18px;}
+.field-label{font-size:12px;font-weight:700;color:var(--text-sub);margin-bottom:6px;display:block;letter-spacing:.5px;}
+.field-label .req{color:var(--lav-dk);margin-left:3px;}
+.field-input{width:100%;padding:11px 14px;border:1.5px solid var(--border);border-radius:12px;font-size:14px;background:var(--bg);color:var(--text);outline:none;transition:border-color .2s;font-family:inherit;}
+.field-input:focus{border-color:var(--lav-dk);}
+.field-input.error{border-color:#EF4444;}
+
+/* 투표 선택지 */
+.vote-opts{display:flex;flex-direction:column;gap:8px;}
+.vote-opt{display:flex;align-items:center;gap:10px;padding:11px 14px;border:1.5px solid var(--border);border-radius:12px;cursor:pointer;transition:all .2s;background:var(--surface);}
+.vote-opt:hover{border-color:var(--lav);background:var(--lav-lt);}
+.vote-opt.selected{border-color:var(--lav-dk);background:var(--lav-lt);box-shadow:0 0 0 2px rgba(167,139,219,.2);}
+.vote-circle{width:18px;height:18px;border-radius:50%;border:2px solid var(--border);flex-shrink:0;transition:all .2s;display:flex;align-items:center;justify-content:center;}
+.vote-opt.selected .vote-circle{border-color:var(--lav-dk);background:var(--lav-dk);}
+.vote-circle::after{content:'';width:7px;height:7px;border-radius:50%;background:#fff;opacity:0;transition:opacity .15s;}
+.vote-opt.selected .vote-circle::after{opacity:1;}
+.vote-text{font-size:14px;font-weight:500;}
+
+/* 버튼 */
+.submit-btn{width:100%;padding:13px;background:var(--lav);color:var(--text);border:none;border-radius:14px;font-size:15px;font-weight:700;cursor:pointer;transition:all .2s;font-family:inherit;margin-top:8px;}
+.submit-btn:hover{background:var(--lav-dk);color:#fff;box-shadow:0 4px 16px rgba(167,139,219,.35);}
+.submit-btn:disabled{opacity:.5;cursor:not-allowed;}
+
+/* 완료 화면 */
+.done{text-align:center;padding:48px 28px;}
+.done-icon{font-size:56px;margin-bottom:16px;}
+.done-title{font-family:'Nunito',sans-serif;font-size:22px;font-weight:900;color:var(--lav-dk);margin-bottom:8px;}
+.done-sub{font-size:13px;color:var(--text-sub);line-height:1.6;}
+
+/* 비활성 / 로딩 */
+.state-box{text-align:center;padding:60px 28px;}
+.state-icon{font-size:48px;margin-bottom:14px;}
+.state-title{font-size:16px;font-weight:700;color:var(--text);margin-bottom:6px;}
+.state-sub{font-size:13px;color:var(--text-sub);}
+
+.err-msg{font-size:11px;color:#EF4444;margin-top:5px;display:none;}
+</style>
+</head>
+<body>
+
+<div class="card" id="mainCard">
+  <!-- 헤더 -->
+  <div class="card-header">
+    <div class="avatar">🐼</div>
+    <div class="streamer-name">판다율</div>
+    <div class="streamer-tag">소통 · 종겜 · 율팡이</div>
+    <div class="event-name" id="eventNameBadge">이벤트 폼</div>
+  </div>
+
+  <!-- 상태별 콘텐츠 -->
+  <div id="formArea">
+    <div class="state-box">
+      <div class="state-icon">⏳</div>
+      <div class="state-title">불러오는 중...</div>
+    </div>
+  </div>
+</div>
+
+<script src="/js/supabase-config.js"></script>
+<script>
+let formConfig=null;
+let voteSelections={}; // {fieldIndex: optionText}
+
+async function init(){
+  const{data,error}=await supabaseClient.from('form_config').select('*').eq('is_active',true).limit(1);
+  if(error||!data||!data.length){
+    document.getElementById('formArea').innerHTML=`
+      <div class="state-box">
+        <div class="state-icon">🐼</div>
+        <div class="state-title">현재 진행 중인 이벤트가 없어요</div>
+        <div class="state-sub">다음 이벤트를 기다려주세요!</div>
+      </div>`;
+    return;
+  }
+  formConfig=data[0];
+  document.getElementById('eventNameBadge').textContent=formConfig.event_name||'이벤트 폼';
+  document.title=`판다율 🩷 ${formConfig.event_name||'이벤트 폼'}`;
+
+  // 투표 선택지 로드
+  const{data:opts}=await supabaseClient.from('vote_options').select('*').eq('config_id',formConfig.id).order('field_index').order('display_order');
+  formConfig._voteOpts=opts||[];
+
+  renderForm();
+}
+
+function renderForm(){
+  const c=formConfig;
+  let html='<div class="card-body">';
+
+  // 닉네임
+  if(c.use_nickname!==false){
+    html+=`<div class="field-group">
+      <label class="field-label">닉네임<span class="req">*</span></label>
+      <input class="field-input" type="text" id="f_nickname" placeholder="닉네임을 입력해주세요">
+      <div class="err-msg" id="err_nickname">닉네임을 입력해주세요</div>
+    </div>`;
+  }
+
+  // 연락처
+  if(c.use_contact){
+    html+=`<div class="field-group">
+      <label class="field-label">연락처</label>
+      <input class="field-input" type="text" id="f_contact" placeholder="연락처를 입력해주세요">
+    </div>`;
+  }
+
+  // 커스텀 필드
+  for(let i=1;i<=5;i++){
+    const label=c[`field_${i}_label`];
+    const type=c[`field_${i}_type`];
+    const active=c[`field_${i}_active`];
+    if(!label||active===false)continue;
+
+    if(type==='text'){
+      html+=`<div class="field-group">
+        <label class="field-label">${label}</label>
+        <input class="field-input" type="text" id="f_field_${i}" placeholder="${label}">
+      </div>`;
+    }else if(type==='vote'){
+      const opts=formConfig._voteOpts.filter(o=>o.field_index===i);
+      html+=`<div class="field-group">
+        <label class="field-label">${label}</label>
+        <div class="vote-opts" id="vote_${i}">
+          ${opts.map(o=>`
+            <div class="vote-opt" onclick="selectVote(${i},'${o.option_text.replace(/'/g,"\\'")}',this)">
+              <div class="vote-circle"></div>
+              <span class="vote-text">${o.option_text}</span>
+            </div>`).join('')}
+        </div>
+      </div>`;
+    }
+  }
+
+  html+=`<button class="submit-btn" onclick="submitForm()">제출하기 🩷</button>`;
+  html+='</div>';
+  document.getElementById('formArea').innerHTML=html;
+}
+
+function selectVote(fieldIdx, optText, el){
+  voteSelections[fieldIdx]=optText;
+  document.querySelectorAll(`#vote_${fieldIdx} .vote-opt`).forEach(e=>e.classList.remove('selected'));
+  el.classList.add('selected');
+}
+
+async function submitForm(){
+  const c=formConfig;
+  let valid=true;
+
+  // 닉네임 검증
+  const nickEl=document.getElementById('f_nickname');
+  if(nickEl&&!nickEl.value.trim()){
+    nickEl.classList.add('error');
+    document.getElementById('err_nickname').style.display='block';
+    valid=false;
+  }else if(nickEl){
+    nickEl.classList.remove('error');
+    document.getElementById('err_nickname').style.display='none';
+  }
+  if(!valid)return;
+
+  const btn=document.querySelector('.submit-btn');
+  btn.disabled=true;btn.textContent='제출 중...';
+
+  const row={
+    config_id:c.id,
+    nickname:document.getElementById('f_nickname')?.value.trim()||null,
+    contact:document.getElementById('f_contact')?.value.trim()||null,
+  };
+  for(let i=1;i<=5;i++){
+    const label=c[`field_${i}_label`];
+    const type=c[`field_${i}_type`];
+    const active=c[`field_${i}_active`];
+    if(!label||active===false){row[`field_${i}`]=null;continue;}
+    if(type==='text'){
+      row[`field_${i}`]=document.getElementById(`f_field_${i}`)?.value.trim()||null;
+    }else if(type==='vote'){
+      row[`field_${i}`]=voteSelections[i]||null;
+    }
+  }
+
+  const{error}=await supabaseClient.from('form_submissions').insert([row]);
+  if(error){
+    btn.disabled=false;btn.textContent='제출하기 🩷';
+    alert('제출 실패: '+error.message);return;
+  }
+
+  // 완료 화면
+  document.getElementById('formArea').innerHTML=`
+    <div class="done">
+      <div class="done-icon">🩷</div>
+      <div class="done-title">제출 완료!</div>
+      <div class="done-sub">참여해주셔서 감사해요, 율팡이!<br>판다율이 확인할게요 🐼</div>
+    </div>`;
+}
+
+init();
+</script>
+</body>
+</html>
