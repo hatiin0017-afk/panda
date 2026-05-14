@@ -241,7 +241,15 @@ async function loadSongs() {
     const query = supabaseClient.from('songs').select('*').order('artist',{ascending:true}).order('title',{ascending:true});
     const { data, error } = currentGenre === 'all' ? await query : await query.eq('genre', currentGenre);
     if (error) throw error;
-    allSongs = (data || []).sort((a,b) => a.artist.localeCompare(b.artist,'ko') || a.title.localeCompare(b.title,'ko'));
+    function sortKoEn(a,b){
+      const isKo=s=>/^[가-힣]/.test(s);
+      const isEn=s=>/^[a-zA-Z]/.test(s);
+      const ak=isKo(a),bk=isKo(b),ae=isEn(a),be=isEn(b);
+      if(ak&&!bk)return -1; if(!ak&&bk)return 1;
+      if(ae&&!be)return -1; if(!ae&&be)return 1;
+      return a.localeCompare(b,'ko');
+    }
+    allSongs = (data || []).sort((a,b) => sortKoEn(a.title, b.title));
     loading.style.display = 'none';
 
     const label = { all:'전체', kpop:'케이팝', jpop:'제이팝', pop:'팝', aegyo:'애교송' };

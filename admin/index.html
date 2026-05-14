@@ -685,6 +685,18 @@ async function saveScheduleEdit(id){
 // ════════════════════════
 let curSongGenre='all',allSongs=[];
 
+// 한글 우선 → 영문 → 기타 정렬
+function sortKoEn(a,b){
+  const isKo=s=>/^[가-힣]/.test(s);
+  const isEn=s=>/^[a-zA-Z]/.test(s);
+  const ak=isKo(a),bk=isKo(b),ae=isEn(a),be=isEn(b);
+  if(ak&&!bk)return -1;
+  if(!ak&&bk)return 1;
+  if(ae&&!be)return -1;
+  if(!ae&&be)return 1;
+  return a.localeCompare(b,'ko');
+}
+
 document.addEventListener('DOMContentLoaded',()=>{
   document.getElementById('songGenreTabs')?.querySelectorAll('.gtab').forEach(t=>{
     t.addEventListener('click',()=>{
@@ -695,9 +707,9 @@ document.addEventListener('DOMContentLoaded',()=>{
 });
 
 async function loadSongs(){
-  const q=supabaseClient.from('songs').select('*').order('artist',{ascending:true}).order('title',{ascending:true});
+  const q=supabaseClient.from('songs').select('*');
   const{data}=curSongGenre==='all'?await q:await q.eq('genre',curSongGenre);
-  allSongs=(data||[]).sort((a,b)=>a.artist.localeCompare(b.artist,'ko')||a.title.localeCompare(b.title,'ko'));
+  allSongs=(data||[]).sort((a,b)=>sortKoEn(a.title,b.title));
   renderSongTable(allSongs);
 }
 
