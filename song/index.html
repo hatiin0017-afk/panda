@@ -342,5 +342,14 @@ document.querySelectorAll('.fade-up').forEach(el => obs.observe(el));
 
 loadSongs();
 </script>
+<script>
+function sendHeight(){
+  const h = document.documentElement.scrollHeight;
+  window.parent.postMessage({type:'pandaHeight', height:h}, '*');
+}
+window.addEventListener('load', sendHeight);
+window.addEventListener('resize', sendHeight);
+new MutationObserver(sendHeight).observe(document.body, {childList:true, subtree:true});
+</script>
 </body>
 </html>
