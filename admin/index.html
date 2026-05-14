@@ -429,6 +429,7 @@ tbody td.col-action{white-space:nowrap;text-align:right;}
           <div style="display:flex;align-items:flex-end;gap:8px;">
             <button class="btn btn-add" onclick="toggleFormActive(true)">활성화</button>
             <button class="btn-del" style="padding:8px 18px;border-radius:10px;font-size:13px;" onclick="toggleFormActive(false)">비활성화</button>
+            <button class="btn-edit" style="padding:8px 14px;font-size:12px;" onclick="newFormEvent()" title="새 이벤트로 발행 — 시청자 참여 기록 초기화">🆕 새 이벤트</button>
           </div>
         </div>
         <!-- URL / iframe 공유 -->
@@ -1404,6 +1405,19 @@ function renderFields(){
     </div>`).join('');
 }
 
+async function newFormEvent(){
+  if(!confirm('새 이벤트로 발행할까요?\n기존 응답은 유지되고, 시청자 참여 기록이 초기화돼서 다시 참여 가능해집니다.'))return;
+  // 기존 폼 비활성화
+  if(currentFormId){
+    await supabaseClient.from('form_config').update({is_active:false}).eq('id',currentFormId);
+  }
+  // currentFormId 초기화 → 저장 시 새 row 생성
+  currentFormId=null;
+  currentFormConfig=null;
+  updateActiveBadge(false);
+  toast('🆕 새 이벤트 준비됨 — 내용 수정 후 저장하고 활성화하세요');
+}
+
 function copyFormUrl(){
   const url=location.origin+'/form/';
   navigator.clipboard.writeText(url)
@@ -1584,8 +1598,9 @@ async function loadResponses(){
 
 async function clearResponses(){
   if(!currentFormId){toast('폼이 없어요');return;}
-  if(!confirm('모든 응답을 삭제할까요?'))return;
-  await supabaseClient.from('form_submissions').delete().eq('config_id',currentFormId);
+  if(!confirm('모든 응답을 삭제할까요?\n(시청자 localStorage 기록은 유지되어 재참여는 불가해요)'))return;
+  const{error}=await supabaseClient.from('form_submissions').delete().eq('config_id',currentFormId);
+  if(error){toast('삭제 실패: '+error.message);console.error(error);return;}
   toast('🗑️ 전체 삭제됨');loadResponses();
 }
 
