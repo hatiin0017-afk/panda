@@ -20,7 +20,7 @@ body{background:var(--bg);font-family:'Noto Sans KR',sans-serif;color:var(--text
 
 /* 헤더 */
 .card-header{background:linear-gradient(135deg,var(--lav-lt) 0%,var(--yellow) 100%);padding:32px 28px 24px;text-align:center;position:relative;}
-.avatar{width:72px;height:72px;border-radius:50%;background:linear-gradient(135deg,var(--lav),var(--pink-lt));border:2.5px solid var(--lav-dk);display:flex;align-items:center;justify-content:center;font-size:36px;margin:0 auto 12px;}
+.avatar{width:96px;height:96px;border-radius:50%;background:linear-gradient(135deg,var(--lav),var(--pink-lt));border:3px solid var(--surface);box-shadow:0 4px 16px rgba(167,139,219,.2);display:flex;align-items:center;justify-content:center;font-size:36px;margin:0 auto 14px;overflow:hidden;}
 .streamer-name{font-family:'Nunito',sans-serif;font-size:22px;font-weight:900;background:linear-gradient(135deg,#A78BDB,#E88BB5);-webkit-background-clip:text;-webkit-text-fill-color:transparent;background-clip:text;}
 .streamer-tag{font-size:12px;color:var(--text-sub);margin-top:3px;}
 .event-name{margin-top:16px;display:inline-block;background:var(--lav);color:var(--text);font-size:13px;font-weight:700;padding:6px 18px;border-radius:100px;}
@@ -70,9 +70,10 @@ body{background:var(--bg);font-family:'Noto Sans KR',sans-serif;color:var(--text
 <div class="card" id="mainCard">
   <!-- 헤더 -->
   <div class="card-header">
-    <div class="avatar">🐼</div>
+    <div class="avatar">
+      <img src="/assets/profile.jpg" alt="판다율" style="width:100%;height:100%;object-fit:cover;object-position:center;">
+    </div>
     <div class="streamer-name">판다율</div>
-    <div class="streamer-tag">소통 · 종겜 · 율팡이</div>
     <div class="event-name" id="eventNameBadge">이벤트 폼</div>
   </div>
 
