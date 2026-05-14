@@ -247,7 +247,6 @@ footer {
     <a href="/schedule/">스케줄</a>
     <a href="/song/">노래책</a>
     <a href="/work/">업보</a>
-    <a href="#" id="broadcastLink" target="_blank">방송국</a>
   </div>
 </div>
 
@@ -369,7 +368,7 @@ loadSchedule();
 loadOverlay();
 
 // 방송국 링크
-document.getElementById('broadcastLink').href = 'https://www.sooplive.com/station/yuri3340';
+// 방송국 링크 제거됨
 
 // fade-up 스크롤 애니메이션
 const observer = new IntersectionObserver(entries => {
