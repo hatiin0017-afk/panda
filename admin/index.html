@@ -436,9 +436,12 @@ tbody td.col-action{white-space:nowrap;text-align:right;}
         <div style="display:flex;gap:10px;flex-wrap:wrap;">
           <div id="chipNick" class="form-chip active" onclick="toggleChip('nick')">닉네임 (필수)</div>
           <div id="chipContact" class="form-chip" onclick="toggleChip('contact')">연락처</div>
+          <div id="chipAnon" class="form-chip" onclick="toggleChip('anon')">익명 허용</div>
         </div>
+        <div style="font-size:11px;color:var(--text-mut);margin-top:8px;">익명 허용 ON → 시청자가 닉네임 없이 제출 가능</div>
         <input type="hidden" id="useNickname" value="true">
         <input type="hidden" id="useContact" value="false">
+        <input type="hidden" id="allowAnon" value="false">
       </div>
 
       <!-- 커스텀 필드 -->
@@ -1142,8 +1145,10 @@ let currentFormId=null;
 let formFields=[]; // [{id, label, type, active, options:[]}]
 
 function toggleChip(key){
-  const el=document.getElementById('chip'+key[0].toUpperCase()+key.slice(1));
-  const hid=document.getElementById('use'+key[0].toUpperCase()+key.slice(1));
+  const capKey=key[0].toUpperCase()+key.slice(1);
+  const el=document.getElementById('chip'+capKey);
+  const hidId=key==='anon'?'allowAnon':'use'+capKey;
+  const hid=document.getElementById(hidId);
   const isActive=el.classList.contains('active');
   if(key==='nick'&&isActive)return; // 닉네임은 항상 ON
   el.classList.toggle('active',!isActive);
@@ -1219,8 +1224,10 @@ async function loadFormConfig(){
   document.getElementById('formEventName').value=c.event_name||'';
   document.getElementById('useNickname').value=String(c.use_nickname!==false);
   document.getElementById('useContact').value=String(c.use_contact===true);
+  document.getElementById('allowAnon').value=String(c.allow_anon===true);
   document.getElementById('chipNick').classList.toggle('active',c.use_nickname!==false);
   document.getElementById('chipContact').classList.toggle('active',c.use_contact===true);
+  document.getElementById('chipAnon').classList.toggle('active',c.allow_anon===true);
   updateActiveBadge(c.is_active);
 
   // 필드 복원
@@ -1262,6 +1269,7 @@ async function saveFormConfig(){
     event_name:eventName,
     use_nickname:document.getElementById('useNickname').value==='true',
     use_contact:document.getElementById('useContact').value==='true',
+    allow_anon:document.getElementById('allowAnon').value==='true',
   };
   for(let i=1;i<=5;i++){
     const f=formFields[i-1];
