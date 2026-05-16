@@ -258,13 +258,6 @@ footer {
   </div>
 </div>
 
-<!-- 최근 부른 곡 -->
-<div class="section" style="margin-bottom:0">
-  <div class="sec-label">최근 부른 곡</div>
-  <div id="overlay-list" class="overlay-list">
-    <div class="loading">불러오는 중...</div>
-  </div>
-</div>
 
 <footer>© 2026 판다율</footer>
 
@@ -328,44 +321,8 @@ async function loadSchedule() {
   }
 }
 
-async function loadOverlay() {
-  const el = document.getElementById('overlay-list');
-  try {
-    const { data, error } = await supabaseClient
-      .from('recent_overlays')
-      .select('*')
-      .order('played_at', { ascending: false })
-      .limit(5);
-
-    if (error) throw error;
-
-    if (!data || !data.length) {
-      el.innerHTML = '<div class="empty-box">최근 오버레이 기록이 없어요 🎵</div>';
-      return;
-    }
-
-    el.innerHTML = data.map((s, i) => {
-      const d = new Date(s.played_at);
-      const dateStr = `${d.getMonth()+1}/${d.getDate()}`;
-      return `
-        <div class="ov-row">
-          <span class="ov-num">0${i+1}</span>
-          <div class="ov-thumb">🎵</div>
-          <div>
-            <div class="ov-title">${s.song_title}</div>
-            <div class="ov-artist">${s.song_artist || ''}</div>
-          </div>
-          <span class="ov-date">${dateStr}</span>
-        </div>`;
-    }).join('');
-  } catch(e) {
-    console.error(e);
-    el.innerHTML = '<div class="empty-box">불러오지 못했어요</div>';
-  }
-}
 
 loadSchedule();
-loadOverlay();
 
 // 방송국 링크
 // 방송국 링크 제거됨
