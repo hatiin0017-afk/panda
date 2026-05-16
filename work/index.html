@@ -174,7 +174,7 @@ async function load() {
       memberTasks[t.member_id].push(t);
     });
 
-    allMembers = (members||[]).filter(m => memberTasks[m.id]?.length && !m.is_hidden)
+    allMembers = (members||[]).filter(m => (memberTasks[m.id]?.length || m.coins > 0) && !m.is_hidden)
       .sort((a,b) => a.nickname.localeCompare(b.nickname,'ko'));
 
     if (!allMembers.length) { document.getElementById('emptyState').style.display='block'; return; }
