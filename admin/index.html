@@ -354,6 +354,12 @@ tbody td.col-action{white-space:nowrap;text-align:right;}
           </div>
           <span style="font-size:11px;color:var(--text-mut);">저장 시 반영</span>
         </div>
+        <!-- 메모 -->
+        <div style="margin-top:14px;">
+          <label style="font-size:11px;font-weight:700;color:var(--text-mut);letter-spacing:.8px;text-transform:uppercase;display:block;margin-bottom:6px;">📝 관리자 메모</label>
+          <textarea id="memberMemo" placeholder="이 시청자에 대한 메모를 남겨요 (비공개)" style="min-height:80px;font-size:13px;resize:vertical;"></textarea>
+          <div style="font-size:11px;color:var(--text-mut);margin-top:4px;">저장 버튼 누를 때 함께 저장돼요</div>
+        </div>
       </div>
     </div>
 
@@ -1173,6 +1179,7 @@ async function selectMember(id){
   document.getElementById('coinCurrent').textContent=`${m.coins||0}개`;
   document.getElementById('coinPending').textContent='0';
   document.getElementById('coinPending').style.color='var(--text-mut)';
+  document.getElementById('memberMemo').value=m.memo||'';
   renderAssignMemberGrid(allMembers.filter(x=>{
     const q=document.getElementById('assignSearch').value.toLowerCase();
     return !q||x.nickname.toLowerCase().includes(q)||x.user_id.toLowerCase().includes(q);
@@ -1230,19 +1237,26 @@ async function saveTasks(){
       await supabaseClient.from('upbo_tasks').insert([{member_id:selMemberId,task_type_id:t.id,quantity:qty,memo}]);
     }
   }
-  // 코인 처리
+  // 코인 + 메모 처리
+  const memo=document.getElementById('memberMemo').value.trim();
+  const updateData={memo:memo||null};
   if(coinPending!==0){
     const member=allMembers.find(m=>m.id===selMemberId);
     const newCoins=Math.max(0,(member.coins||0)+coinPending);
-    await supabaseClient.from('upbo_members').update({coins:newCoins}).eq('id',selMemberId);
+    updateData.coins=newCoins;
+    await supabaseClient.from('upbo_members').update(updateData).eq('id',selMemberId);
     document.getElementById('coinCurrent').textContent=`${newCoins}개`;
     toast(`💾 저장! Coin ${coinPending>=0?'+':''}${coinPending} → ${newCoins}개`);
     coinPending=0;
     document.getElementById('coinPending').textContent='0';
     document.getElementById('coinPending').style.color='var(--text-mut)';
   }else{
+    await supabaseClient.from('upbo_members').update(updateData).eq('id',selMemberId);
     toast('💾 저장 완료!');
   }
+  // allMembers 메모 동기화
+  const idx=allMembers.findIndex(m=>m.id===selMemberId);
+  if(idx>-1)allMembers[idx].memo=memo||null;
   await loadMembers();
   if(selMemberId){
     document.getElementById(`assignMemberGrid`).querySelectorAll('.member-card-btn').forEach(b=>{
